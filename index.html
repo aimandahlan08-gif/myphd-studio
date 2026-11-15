@@ -2565,7 +2565,6 @@ modeChanged();
 let startOut="info"; try{ startOut=localStorage.getItem("myphd.out")||"info"; }catch(e){}
 let startVideo=false; try{ startVideo=localStorage.getItem("myphd.video")==="1"; }catch(e){}
 OUT=startOut; setVideo(startVideo,true);
-if(savedVideo||sInfo||sSl||sCar) reveal();
 let startSrc="paper"; try{ startSrc=localStorage.getItem("myphd.src")||"paper"; }catch(e){}
 setSrc(startSrc,true);
 setTheme(startTheme,true);
