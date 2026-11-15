@@ -456,10 +456,10 @@ function drawScene(sc, animate){
 const SAMPLE = {
   title:"How MyPhD Studio works", authors:"Example video", isSample:true,
   scenes:[
-    {layout:"title",mood:"excited",heading:"Your paper, as a hand-drawn explainer",note:"Example video. Replace it with your own paper.",highlight:"",items:[],
-     narration:"Welcome to MyPhD Studio! Give it a research paper, and it turns the paper into a short explainer video. The sketches draw themselves while a voice tells the story."},
+    {layout:"title",mood:"curious",heading:"Your paper, as a hand-drawn explainer",note:"Example video. Replace it with your own paper.",highlight:"",items:[],
+     narration:"Most research papers reach a handful of readers. What if yours could reach thousands, in two minutes?"},
     {layout:"statement",mood:"curious",heading:"Good studies go unread",note:"A dense PDF asks a lot from a busy reader. A two minute sketch asks very little.",highlight:"",items:[{icon:"document",label:"",detail:""}],
-     narration:"Here is an awkward truth. Most papers reach only a handful of readers. Why? A dense PDF asks a lot from a busy person. A two minute sketch asks very little."},
+     narration:"The problem is not the research. A dense PDF asks a lot from a busy person, so most people stop at the abstract. A two minute sketch asks very little. So how does it work?"},
     {layout:"flow",mood:"warm",heading:"Three steps and a play button",note:"",highlight:"",items:[{icon:"document",label:"Add your PDF",detail:""},{icon:"pencil",label:"Copy the prompt",detail:""},{icon:"chat",label:"Paste Claude's reply",detail:""},{icon:"happy",label:"Watch it draw",detail:""}],
      narration:"You add your PDF, copy the prompt into a Claude chat, and paste the reply back here. Then you press play and the video draws itself."},
     {layout:"compare",mood:"calm",heading:"Who does what",note:"",highlight:"",items:[{icon:"robot",label:"Claude",detail:"Writes the script and chooses a layout for every scene"},{icon:"pencil",label:"MyPhD Studio",detail:"Draws the sketches and reads the script aloud"}],
@@ -876,9 +876,9 @@ const AUDIENCES={
   researchers:"Researchers in the field: use correct terminology, name the design, the measures and the main statistics, and be precise about what the results do and do not show."
 };
 const LENGTHS={
-  short:{label:"about 1 minute",min:5,max:6,w:"20 to 30"},
-  standard:{label:"about 2 minutes",min:7,max:9,w:"25 to 40"},
-  deep:{label:"about 3 minutes",min:10,max:12,w:"30 to 45"}
+  short:{label:"about 1 minute",min:5,max:6,total:150},
+  standard:{label:"about 2 minutes",min:7,max:9,total:300},
+  deep:{label:"about 3 minutes",min:10,max:12,total:450}
 };
 function schema(L){
   const item={type:"object",properties:{
@@ -892,13 +892,13 @@ function schema(L){
     layout:{type:"string",enum:LAYOUTS},
     mood:{type:"string",enum:MOOD_NAMES,description:"How the narrator should sound in this scene. excited: a striking result or the takeaway. surprised: an unexpected finding. curious: the hook or the research question. warm: people, participants and everyday relevance. calm: method details. serious: limitations, risks or caution."},
     heading:{type:"string",description:"On-screen heading, under 8 words. Not a copy of the narration."},
-    narration:{type:"string",description:"What the voice says during this scene, "+L.w+" words, written to be heard."},
+    narration:{type:"string",description:"What the voice says during this scene, written to be heard. Its length follows the scene's importance, as the instructions describe, and never exceeds 55 words."},
     highlight:{type:"string",description:"For 'number' only: the big figure, at most 8 characters, e.g. '312' or '41%'. Otherwise an empty string."},
     note:{type:"string",description:"title: authors and year. statement: the main on-screen sentence, under 22 words. bars: what is measured and the unit. number: what the figure means, under 16 words. Otherwise an optional footnote or an empty string."},
     items:{type:"array",maxItems:5,items:item,description:"title: 0 or 1 item (icon only). statement: 1 item (icon). icons and flow: 2 to 4. compare: exactly 2, with detail. list: 2 to 4. bars: 2 to 5. number: empty."}
   },required:["layout","mood","heading","narration","highlight","note","items"],additionalProperties:false};
   return {type:"object",properties:{
-    title:{type:"string",description:"Plain-language title for the video, under 12 words."},
+    title:{type:"string",description:"The video's title, under 12 words: the question the video answers, or a promise of its answer. Not the paper's own title."},
     authors:{type:"string",description:"Authors and year as given in the paper, e.g. 'Lee & Tan (2023)'. Empty string if not stated."},
     scenes:{type:"array",minItems:L.min,maxItems:L.max,items:scene},
     cautions:{type:"array",items:{type:"string"},description:"Anything simplified, uncertain or unclear in the text that the user should check against the paper. Can be empty."}
@@ -920,14 +920,28 @@ Accuracy comes first:
 - The text was extracted from a PDF and may contain broken tables, missing symbols or a cut-off ending. If something important is unclear, say so in "cautions" instead of guessing.
 
 Story:
-- Tell it in this order: a hook that says why anyone should care, the research question, who took part and how the study was done, the main findings (the most important first), the main limitation, and one takeaway.
-- First scene: layout "title". Last scene: layout "statement" carrying the takeaway.
-- Write ${L.min} to ${L.max} scenes, for a video of ${L.label}. Use at least four different layouts, and pick the layout that suits each scene's content.
+Build the video as a story told to a viewer, not as a summary in the order of the paper. Use these beats, in this order, and give a beat more than one scene only when it needs it:
+1. Hook (the first scene, layout "title"): a stake the viewer can feel, in 10 to 25 words. Open on the problem or a surprising fact from the paper. Never open with a greeting, "In this video", or the paper's title read aloud.
+2. Question: the research question, put the way a curious viewer would ask it.
+3. Answer: the main finding, stated plainly, before any detail about the method.
+4. How we know: who took part and what they did, kept brief and told as the evidence behind the answer.
+5. More findings, if the paper has them, most important first.
+6. What it does not tell us: the main limitation, framed as the open question it leaves behind.
+7. So what (the last scene, layout "statement"): the takeaway, answering the hook and echoing its words.
+Write ${L.min} to ${L.max} scenes in total, for a video of ${L.label}. Use at least four different layouts, and choose the layout that suits each scene's content.
+
+Craft:
+- Link the scenes. End most scenes with a line that pulls the viewer into the next one, such as a question the next scene answers or a set-up it pays off. Vary how you do this, and do not end every scene with a question.
+- Use exactly one analogy for the study's central idea or mechanism. It must match what the paper describes and be plainly an analogy.
+- Once in the video, where it fits naturally, picture a moment from a viewer's everyday life to show why the finding matters. Introduce it with words such as "Picture" or "Imagine" so it can never be mistaken for a participant or a result, and leave it out if it would make the topic seem trivial.
+- Start each scene by speaking to what the drawing shows, in the order it appears on screen, from left to right.
 
 Narration:
-- ${L.w} words per scene, in ${lang}, written to be heard: short sentences, plain words, no brackets, no citations, no symbols.
-- Sound like an enthusiastic science communicator talking to a friend, not like an abstract. Mix short punchy sentences with longer ones. Open the hook with a question or a surprising fact. Use turns such as "but", "so" and "here is the twist" to build a little tension, and let the key finding land in a short sentence of its own.
-- Punctuate for the voice: a question mark where a speaker's voice would rise, an occasional exclamation mark for real excitement, and full stops where a speaker would pause. The excitement must never overstate the findings.
+- In total about ${L.total} words, in ${lang}, which is about 150 words a minute. Give words where the weight is: the hook and links are short, the main finding gets the longest scene, the method stays brief. No scene goes over 55 words.
+- Write for the ear: plain words, one idea per sentence, and no more than three items listed in one sentence. No brackets, citations or symbols.
+- Never read statistical notation aloud, such as r, beta, p values, confidence intervals or odds ratios. Say what the figure means, in words that match the authors' own interpretation, for example "a moderate link" or "about twice as likely", and put the exact figure on screen. Simple counts and percentages may be spoken.
+- Sound like a good lecturer explaining the study to a curious friend: confident, warm, and specific. Vary the sentence length and let the main finding land in a short sentence of its own. Build interest through the content itself, not through stock phrases. Avoid openers and catchphrases such as "welcome to", "in this video", "let's dive in", "here's the twist" and "game-changer".
+- Punctuate for the voice: a question mark where a speaker's voice would rise, full stops where a speaker would pause, and at most one exclamation mark in the whole video. The tone must never overstate the findings.
 - Choose each scene's "mood" to fit what it says, and vary the moods across the video so the delivery does not stay flat.
 - Write numbers so they can be read aloud naturally, and explain any abbreviation the first time.
 - The narration must make sense without the picture. On-screen text is short and supports the narration without repeating it word for word. On-screen text is also in ${lang}.
@@ -935,8 +949,8 @@ Narration:
 Audience: ${AUDIENCES[$("audience").value]}
 
 Layouts:
-- "title": the video title in "heading", authors and year in "note".
-- "statement": one sketch on the left and one sentence in "note". Use it for the hook, the research question, the limitation and the takeaway.
+- "title": the hook scene. The video title in "heading", authors and year in "note", the hook in "narration".
+- "statement": one sketch on the left and one sentence in "note". Use it for the question, the limitation and the takeaway.
 - "icons": 2 to 4 sketches side by side with labels, for who took part or what was measured.
 - "flow": 2 to 4 steps joined by arrows, for the procedure or for a chain such as predictor, mediator and outcome.
 - "compare": two panels side by side, for two groups, two conditions or before and after.
