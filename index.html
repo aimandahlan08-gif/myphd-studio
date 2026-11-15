@@ -481,13 +481,14 @@ const SAMPLE = {
 /* ---------- Player ---------- */
 const P = { story:null, idx:0, playing:false, elapsed:0, minMs:0, estMs:0, narrDone:false, sents:[], sentIdx:0, token:0, last:0, gap:0, starts:[], fellBack:false, waiting:false };
 /* How each mood shapes the delivery: speed for the studio voice, rate and pitch for the browser voice */
+/* Moods only ever lift the delivery. Slowing the studio voice below normal speed made it breathy, like whispering. */
 const MOODS = {
-  excited:  {speed:1.08, rate:1.07, pitch:1.14},
-  surprised:{speed:1.05, rate:1.04, pitch:1.18},
-  curious:  {speed:1.02, rate:1.01, pitch:1.08},
-  warm:     {speed:1.00, rate:1.00, pitch:1.02},
-  calm:     {speed:0.95, rate:0.95, pitch:0.97},
-  serious:  {speed:0.92, rate:0.92, pitch:0.90}
+  excited:  {speed:1.08, rate:1.07, pitch:1.12},
+  surprised:{speed:1.05, rate:1.04, pitch:1.12},
+  curious:  {speed:1.03, rate:1.02, pitch:1.06},
+  warm:     {speed:1.01, rate:1.00, pitch:1.02},
+  calm:     {speed:1.00, rate:1.00, pitch:1.00},
+  serious:  {speed:1.00, rate:1.00, pitch:1.00}
 };
 const MOOD_NAMES = Object.keys(MOODS);
 const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
@@ -495,12 +496,12 @@ function prosody(sc, si, n, text){
   const base=Number($("rate").value);
   if(!$("lively").checked) return {speed:base, rate:base, pitch:1, pause:0.3};
   const md=MOODS[sc.mood]||MOODS.warm, q=/\?["')]*\s*$/.test(text), ex=/!["')]*\s*$/.test(text);
-  const j=(((si*37+text.length*11)%9)-4)/100;          /* small, repeatable variation between sentences */
+  const j=((si*37+text.length*11)%5)/100;              /* small, repeatable lift between sentences, never a slow-down */
   const last=n>1 && si===n-1;
   return {
-    speed: clamp(base*md.speed*(1+j)*(q?0.97:1)*(ex?1.05:1), 0.7, 1.45),
-    rate:  clamp(base*md.rate*(1+j)*(q?0.98:1)*(ex?1.05:1), 0.6, 1.6),
-    pitch: clamp(md.pitch*(1+j*1.6)*(q?1.12:1)*(ex?1.05:1)*(last?0.95:1), 0.6, 1.6),
+    speed: base*clamp(md.speed*(1+j)*(ex?1.04:1), 1, 1.15),
+    rate:  base*clamp(md.rate*(1+j)*(ex?1.04:1), 1, 1.15),
+    pitch: clamp(md.pitch*(1+j)*(q?1.08:1), 1, 1.25),
     pause: q?0.5:(ex?0.38:(last?0.2:0.3))
   };
 }
@@ -510,10 +511,22 @@ const KOKORO_URL="https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.j
 const WORKER_SRC=`
 import { KokoroTTS } from "${KOKORO_URL}";
 let tts=null, chain=Promise.resolve();
+/* Share of audible 20 ms frames that are voiced (low zero-crossing rate). Whisper and breath score low. */
+function voiced(a,sr){
+  const f=Math.round(sr*0.02); let en=0,vo=0;
+  for(let i=0;i+f<=a.length;i+=f){ let e=0,z=0;
+    for(let k=i;k<i+f;k++){ e+=a[k]*a[k]; if(k>i && (a[k]>=0)!==(a[k-1]>=0)) z++; }
+    if(Math.sqrt(e/f)<0.01) continue; en++; if(z/f<0.12) vo++; }
+  return en?vo/en:1;
+}
 async function gen(m){
   const parts=[]; let sr=24000;
   for(const s of m.sentences){
-    const a=await tts.generate(s.text,{voice:m.voice,speed:s.speed});
+    let a=await tts.generate(s.text,{voice:m.voice,speed:s.speed});
+    if(voiced(a.audio,a.sampling_rate)<0.5){
+      const b=await tts.generate(s.text,{voice:m.voice,speed:1});
+      if(voiced(b.audio,b.sampling_rate)>voiced(a.audio,a.sampling_rate)) a=b;
+    }
     sr=a.sampling_rate; parts.push({audio:a.audio,pause:s.pause});
   }
   const lead=Math.round(sr*0.12); let len=lead;
@@ -549,8 +562,17 @@ self.onmessage=(e)=>{
 const ST={worker:null,status:"off",cache:new Map(),busy:null,files:{},device:null};
 let actx=null, src=null;
 function studioKey(i){ const sc=P.story.scenes[i]; return [$("studioVoice").value,$("rate").value,$("lively").checked?1:0,sc.mood,sc.narration].join("|"); }
+function joinShort(ss){
+  const out=[];
+  for(const t of ss){
+    if(out.length && words(out[out.length-1])<4) out[out.length-1]+=" "+t;
+    else out.push(t);
+  }
+  if(out.length>1 && words(out[out.length-1])<4){ const t=out.pop(); out[out.length-1]+=" "+t; }
+  return out;
+}
 function studioSentences(i){
-  const sc=P.story.scenes[i], ss=splitSentences(sc.narration);
+  const sc=P.story.scenes[i], ss=joinShort(splitSentences(sc.narration));
   return ss.map((t,si)=>{ const pr=prosody(sc,si,ss.length,t); return {text:t,speed:pr.speed,pause:pr.pause}; });
 }
 function studioStart(){
