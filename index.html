@@ -138,6 +138,8 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
               <option value="short">Short (1 min)</option>
               <option value="standard" selected>Standard (2 min)</option>
               <option value="deep">Deep dive (3 min)</option>
+              <option value="long">Feature (5 min)</option>
+              <option value="lecture">Mini lecture (10 min)</option>
             </select></div>
           <div class="field"><label for="lang">Narration language</label>
             <select id="lang">
@@ -464,8 +466,8 @@ const SAMPLE = {
      narration:"You add your PDF, copy the prompt into a Claude chat, and paste the reply back here. Then you press play and the video draws itself."},
     {layout:"compare",mood:"calm",heading:"Who does what",note:"",highlight:"",items:[{icon:"robot",label:"Claude",detail:"Writes the script and chooses a layout for every scene"},{icon:"pencil",label:"MyPhD Studio",detail:"Draws the sketches and reads the script aloud"}],
      narration:"Claude reads the paper, writes the script and chooses a layout for every scene. MyPhD Studio draws the sketches and reads the script aloud."},
-    {layout:"bars",mood:"warm",heading:"Pick a length",note:"Most scenes each length setting allows",highlight:"",items:[{label:"Short",value:6,display:"6 scenes"},{label:"Standard",value:9,display:"9 scenes"},{label:"Deep dive",value:12,display:"12 scenes"}],
-     narration:"You choose how long the video runs. A short video has up to six scenes, a standard one up to nine, and a deep dive up to twelve."},
+    {layout:"bars",mood:"warm",heading:"Pick a length",note:"Most scenes each length setting allows",highlight:"",items:[{label:"1 minute",value:6,display:"6 scenes"},{label:"3 minutes",value:12,display:"12 scenes"},{label:"5 minutes",value:20,display:"20 scenes"},{label:"10 minutes",value:36,display:"36 scenes"}],
+     narration:"You choose how long the video runs, from one minute to ten. A one minute video has up to six scenes. A ten minute mini lecture can have more than thirty."},
     {layout:"list",mood:"serious",heading:"It stays close to the paper",note:"",highlight:"",items:[{label:"Only numbers that appear in the paper",detail:""},{label:"The main limitation gets its own scene",detail:""},{label:"Doubts are listed under the video",detail:""}],
      narration:"The script may only use numbers that appear in the paper. The main limitation gets its own scene, and anything Claude was unsure about is listed under the video for you to check."},
     {layout:"number",mood:"surprised",heading:"A small sketch kit",note:"layouts to draw with, from flow charts to bar charts",highlight:"8",items:[],
@@ -878,7 +880,9 @@ const AUDIENCES={
 const LENGTHS={
   short:{label:"about 1 minute",min:5,max:6,total:150},
   standard:{label:"about 2 minutes",min:7,max:9,total:300},
-  deep:{label:"about 3 minutes",min:10,max:12,total:450}
+  deep:{label:"about 3 minutes",min:10,max:12,total:450},
+  long:{label:"about 5 minutes",min:16,max:20,total:750,extended:true},
+  lecture:{label:"about 10 minutes",min:30,max:36,total:1500,extended:true}
 };
 function schema(L){
   const item={type:"object",properties:{
@@ -900,7 +904,7 @@ function schema(L){
   return {type:"object",properties:{
     title:{type:"string",description:"The video's title, under 12 words: the question the video answers, or a promise of its answer. Not the paper's own title."},
     authors:{type:"string",description:"Authors and year as given in the paper, e.g. 'Lee & Tan (2023)'. Empty string if not stated."},
-    scenes:{type:"array",minItems:L.min,maxItems:L.max,items:scene},
+    scenes:{type:"array",minItems:L.extended?Math.floor(L.min/2):L.min,maxItems:L.max,items:scene},
     cautions:{type:"array",items:{type:"string"},description:"Anything simplified, uncertain or unclear in the text that the user should check against the paper. Can be empty."}
   },required:["title","authors","scenes","cautions"],additionalProperties:false};
 }
@@ -928,7 +932,13 @@ Build the video as a story told to a viewer, not as a summary in the order of th
 5. More findings, if the paper has them, most important first.
 6. What it does not tell us: the main limitation, framed as the open question it leaves behind.
 7. So what (the last scene, layout "statement"): the takeaway, answering the hook and echoing its words.
-Write ${L.min} to ${L.max} scenes in total, for a video of ${L.label}. Use at least four different layouts, and choose the layout that suits each scene's content.
+${L.extended?`This is a longer video, so give it more room without padding it:
+- You may add a short background scene after the question when the viewer needs context to follow the answer.
+- Repeat beats 3 to 5 for each main finding: state the finding, show how we know, then link to the next one. Cover the findings in order of importance and leave out minor ones rather than stretching the video.
+- Every 8 to 10 scenes, add a one or two sentence recap of what the viewer now knows, so they can keep the thread.
+- Use the full range of layouts and avoid the same layout in two scenes in a row.
+- If the paper does not have enough substance for this length, write fewer scenes and say so in "cautions" rather than repeating points.
+`:""}Write ${L.min} to ${L.max} scenes in total, for a video of ${L.label}. Use at least four different layouts, and choose the layout that suits each scene's content.
 
 Craft:
 - Link the scenes. End most scenes with a line that pulls the viewer into the next one, such as a question the next scene answers or a set-up it pays off. Vary how you do this, and do not end every scene with a question.
