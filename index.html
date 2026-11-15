@@ -236,7 +236,7 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
           <div class="field" id="voiceField"><label for="voice">Voice</label>
             <select id="voice"></select></div>
           <div class="field" id="rateField"><label for="rate">Speed <span id="rateVal">1.0</span>×</label>
-            <input type="range" id="rate" min="0.7" max="1.3" step="0.05" value="1"></div>
+            <input type="range" id="rate" min="0.95" max="1.05" step="0.05" value="1"></div>
         </div>
         <label class="check" id="livelyField"><input type="checkbox" id="lively" checked> <span>Lively delivery: pace, pitch and pauses follow the mood of each scene</span></label>
         <p class="hint" id="studioHint">The studio voice runs on your own computer, using its graphics chip when the browser allows it. The first time, it downloads a voice model of about 310 MB (or 90 MB without a usable graphics chip). After that it loads from your browser's storage.</p>
@@ -722,7 +722,11 @@ function speakFrom(si){
   const u=new SpeechSynthesisUtterance(P.sents[si]);
   const v=voices[$("voice").value]; if(v){ u.voice=v; u.lang=v.lang; } else u.lang=$("lang").value==="ms"?"ms-MY":"en-GB";
   const pr=prosody(P.story.scenes[P.idx],si,P.sents.length,P.sents[si]);
-  u.rate=pr.rate; u.pitch=pr.pitch;
+  /* Browser voice: fixed, projected delivery in every scene and mood.
+     Edge/Chrome neural voices turn low pitch into a whisper, so pitch stays 0.95-1.05 and rate 0.95-1.05. */
+  u.volume=1.0;
+  u.pitch=clamp(pr.pitch,0.95,1.05);
+  u.rate=clamp(pr.rate,0.95,1.05);
   const tk=++P.token; let started=false;
   u.onstart=()=>{ started=true; };
   u.onend=()=>{ if(tk!==P.token) return; P.sentIdx=si+1; const gap=si+1<P.sents.length?pr.pause*1000:0; setTimeout(()=>{ if(tk===P.token && P.playing) speakFrom(si+1); }, gap); };
@@ -802,10 +806,27 @@ let seed=2; setInterval(()=>{ if(P.playing && !calm){ seed=seed%4+1; $("turb").s
 function fillVoices(){
   if(!synth) return;
   voices=synth.getVoices()||[];
-  const want=$("lang").value==="ms"?/^(ms|id)/i:/^en/i, sel=$("voice"); sel.replaceChildren();
-  const order=voices.map((v,i)=>({v,i})).sort((a,b)=>(want.test(b.v.lang)-want.test(a.v.lang)));
+  const want=$("lang").value==="ms"?/^(ms|id)/i:/^en/i, sel=$("voice"), prev=sel.value; sel.replaceChildren();
+  const order=voices.map((v,i)=>({v,i,s:voiceScore(v,want)})).sort((a,b)=>b.s-a.s);
   order.forEach(({v,i})=>{ const o=document.createElement("option"); o.value=i; o.textContent=v.name+" ("+v.lang+")"; sel.append(o); });
-  if(!voices.length){ const o=document.createElement("option"); o.value=""; o.textContent="Default voice"; sel.append(o); }
+  if(!voices.length){ const o=document.createElement("option"); o.value=""; o.textContent="Default voice"; sel.append(o); return; }
+  const keep=prev!==""&&order.some(x=>String(x.i)===prev&&!SOFT_VOICE.test(x.v.name));
+  sel.value=keep?prev:String(order[0].i);
+}
+/* Rank voices so a clear, standard narrator comes first; soft, whispery and novelty profiles sink. */
+const SOFT_VOICE=/whisper|soft|intimate|breath|gentle|asmr|lullaby|sleep|bad news|good news|bells|bubbles|cellos|organ|zarvox|trinoids|boing|bahh|albert|jester|wobble|superstar|hysterical|deranged|grandma|grandpa|junior|ralph|kathy|fred|princess/i;
+const CLEAR_VOICE=/natural|neural|online|google|enhanced|premium/i;
+const STD_NARRATOR=/aria|jenny|guy|ryan|sonia|libby|natasha|william|daniel|samantha|karen|serena|moira|tessa|alex|uk english|us english|yasmin|osman/i;
+function voiceScore(v,want){
+  let s=0;
+  if(want.test(v.lang)) s+=100;
+  if($("lang").value!=="ms"&&/^en[-_](gb|us)/i.test(v.lang)) s+=10;
+  if(SOFT_VOICE.test(v.name)) s-=200;
+  if(CLEAR_VOICE.test(v.name)) s+=20;
+  if(STD_NARRATOR.test(v.name)) s+=12;
+  if(v.localService===false) s+=4;
+  if(v.default) s+=2;
+  return s;
 }
 if(synth){ fillVoices(); try{ synth.addEventListener("voiceschanged",fillVoices); }catch(e){ synth.onvoiceschanged=fillVoices; } }
 function modeChanged(){
