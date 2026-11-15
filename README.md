@@ -1,6 +1,8 @@
 # MyPhD Studio
 
-Turn a research paper into a hand-drawn explainer video, a one-page infographic, conference slides with speaker notes, or an Instagram carousel.
+Turn a research paper or a psychology topic into a one-page infographic, conference slides with speaker notes and an Instagram carousel, with an optional narrated explainer video.
+
+Every output is drawn in one of three styles: **Refined Architectural** (black, white and ochre on grid paper), **Vintage Field Journal** (sepia, rust and sage on archival paper, with stippling and FIG. labels) or **Editorial Magazine** (serif headings, terracotta and sage spot art).
 
 1. Add your paper (PDF).
 2. Copy the prompt into Claude.

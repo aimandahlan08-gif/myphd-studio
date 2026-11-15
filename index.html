@@ -5,31 +5,30 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MyPhD Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=Patrick+Hand&family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Host+Grotesk:wght@500;600;700;800&family=Architects+Daughter&family=Newsreader:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400&family=Lora:wght@400;600&display=swap" rel="stylesheet">
 <style>
-@font-face{font-family:"Excalifont";src:url("https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.18.1/dist/prod/fonts/Excalifont/Excalifont-Regular-a88b72a24fb54c9f94e3b5fdaa7481c9.woff2") format("woff2");font-display:swap}
-/* Layout idea: a workbench. Three numbered steps on the left, the sketchbook stage on the right; one column on narrow screens. Single light theme by choice: the stage is paper. */
+/* Layout: one calm column. Input card, then the reply panel, then the outputs. Three styles: Refined Architectural, Vintage Field Journal, Editorial Magazine. */
 :root{
   color-scheme: light;
-  /* Palette: signal yellow #FFD60A, amber #F5B700, pale yellow #FFF3B6, soft black #121212, grey #5E5E5E, warm white #FFFDF6 */
-  --bg:#fffdf6;
+  /* Studio palette (Refined Architectural): crisp white, deep ink #1A1A1A, ochre #DDA15E / #E9C46A, grid grey #EAEAE6 */
+  --bg:#fdfdfd;
   --panel:#ffffff;
-  --paper:#fffdf6;
-  --ink:#121212;
-  --muted:#5e5e5e;
-  --line:#e7e2d3;
-  --yellow:#ffd60a;
-  --amber:#f5b700;
-  --tint:#fff3b6;
-  --soft:#f6f3ea;
-  --teal:#121212;
-  --coral:#f5b700;
-  --marker:#ffd60a;
-  --ok:#17794a;
-  --bad:#b3261e;
-  --display:"Bricolage Grotesque","Trebuchet MS",sans-serif;
-  --body:"Figtree","Segoe UI",system-ui,sans-serif;
-  --hand:"Patrick Hand","Segoe Print","Bradley Hand","Comic Sans MS",cursive;
+  --paper:#ffffff;
+  --ink:#1a1a1a;
+  --muted:#5c5a55;
+  --line:#eaeae6;
+  --yellow:#e9c46a;
+  --amber:#dda15e;
+  --tint:#fbf3df;
+  --soft:#f2f0ea;
+  --teal:#1a1a1a;
+  --coral:#dda15e;
+  --marker:#e9c46a;
+  --ok:#2f6b4a;
+  --bad:#a23b2a;
+  --display:"Host Grotesk","Inter","Helvetica Neue",Arial,sans-serif;
+  --body:"Inter","Helvetica Neue",Arial,sans-serif;
+  --hand:"Architects Daughter","Inter",sans-serif;
   --sketch:var(--hand);
 }
 *{box-sizing:border-box}
@@ -94,7 +93,7 @@ progress{width:100%;height:8px;accent-color:var(--amber)}
 .check{display:flex;gap:8px;align-items:flex-start;font-weight:500;font-size:14px}
 .check input{margin-top:3px;accent-color:var(--ink)}
 #voiceProg{height:6px}
-.picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:#efebdf;border-radius:16px;padding:5px}
+.picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:#f2f0ea;border-radius:16px;padding:5px}
 .picker.three{grid-template-columns:repeat(3,minmax(0,1fr))}
 .picker button{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:transparent;padding:12px 4px;border-radius:12px;min-width:0;color:var(--muted)}
 .picker button:hover{background:rgba(255,255,255,.6)}
@@ -136,7 +135,7 @@ details.more[open]>summary{margin-bottom:12px}
 .empty{border:2px dashed #dcd5c2;background:transparent;box-shadow:none;align-items:center;text-align:center;padding:44px 20px;color:#9b9584}
 .empty h2{color:var(--ink);font-size:21px}
 .empty .hint{max-width:40ch}
-.replypanel{background:#fffbea;border-color:#f1e19a}
+.replypanel{background:#fdfaf2;border-color:#eadcb8}
 ol.steps{list-style:none;counter-reset:st;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;font-size:16px}
 ol.steps li{counter-increment:st;display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start}
 ol.steps li>span{padding-top:4px}
@@ -183,24 +182,23 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
 <body>
 <svg id="sharedDefs" width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
   <defs>
-    <filter id="rough" x="-3%" y="-3%" width="106%" height="106%">
-      <feTurbulence id="turb" type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="2" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
+    <filter id="grain" x="0" y="0" width="100%" height="100%" color-interpolation-filters="sRGB">
+      <feTurbulence type="fractalNoise" baseFrequency=".85" numOctaves="2" stitchTiles="stitch"/>
+      <feColorMatrix values="0 0 0 0 .16  0 0 0 0 .13  0 0 0 0 .09  0 0 0 1.6 -.35"/>
     </filter>
-    <filter id="roughStill" x="-3%" y="-3%" width="106%" height="106%">
-      <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="2" result="n"/>
-      <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
-    </filter>
-    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle id="dotC" cx="2" cy="2" r="1.1" fill="#d9d6c8"/></pattern>
-    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path id="gridP" d="M40 0H0V40" fill="none" stroke="#2f5f9c" stroke-width="1.2"/></pattern>
-    <pattern id="hatchT" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><line id="hatchTL" x1="0" y1="0" x2="0" y2="9" stroke="#0c8a80" stroke-width="3.2"/></pattern>
-    <pattern id="hatchC" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-40)"><line id="hatchCL" x1="0" y1="0" x2="0" y2="9" stroke="#e4533b" stroke-width="3.2"/></pattern>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle id="dotC" cx="2" cy="2" r="1.1" fill="#e6dfd1"/></pattern>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path id="gridP" d="M40 0H0V40" fill="none" stroke="#eaeae6" stroke-width="1"/></pattern>
+    <pattern id="stipT" width="8" height="8" patternUnits="userSpaceOnUse"><g class="stipTC" fill="#4f6354"><circle cx="1.5" cy="1.6" r=".95"/><circle cx="5.6" cy="5.4" r=".8"/><circle cx="6.1" cy="1.2" r=".5"/></g></pattern>
+    <pattern id="stipC" width="8" height="8" patternUnits="userSpaceOnUse"><g class="stipCC" fill="#9e472a"><circle cx="1.5" cy="1.6" r=".95"/><circle cx="5.6" cy="5.4" r=".8"/><circle cx="2.4" cy="6.4" r=".5"/></g></pattern>
+    <pattern id="xhT" width="7" height="7" patternUnits="userSpaceOnUse"><path class="xhTL" d="M0 0L7 7M7 0L0 7" stroke="#4f6354" stroke-width=".8"/></pattern>
+    <pattern id="xhC" width="7" height="7" patternUnits="userSpaceOnUse"><path class="xhCL" d="M0 0L7 7M7 0L0 7" stroke="#9e472a" stroke-width=".8"/></pattern>
+ width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-40)"><line id="hatchCL" x1="0" y1="0" x2="0" y2="9" stroke="#e4533b" stroke-width="3.2"/></pattern>
   </defs>
 </svg>
 <div class="wrap">
   <header>
     <h1><span>MyPhD</span> Studio</h1>
-    <p>Turn a research paper or a psychology topic into a hand-drawn infographic, conference slides and an Instagram carousel. Add an explainer video if you like.</p>
+    <p>Turn a research paper or a psychology topic into an illustrated infographic, conference slides and an Instagram carousel. Add an explainer video if you like.</p>
   </header>
 
   <section class="card main" aria-labelledby="s1">
@@ -315,7 +313,7 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
       </div>
     </details>
         <label class="vidtoggle" for="wantVideo"><input type="checkbox" id="wantVideo">
-          <div><b>Also make an explainer video</b><span>A narrated, hand-drawn video. It makes Claude's reply longer.</span></div></label>
+          <div><b>Also make an explainer video</b><span>A narrated, illustrated video. It makes Claude's reply longer.</span></div></label>
         <fieldset class="opt" id="videoOpts" hidden><legend>Explainer video</legend>
           <div class="row">
               <div class="field" id="lengthField"><label for="length">Video length</label>
@@ -369,9 +367,10 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
     <div class="stack" id="outVideo">
       <section class="card" aria-label="Video player">
         <div class="stagebox" id="stagebox">
-          <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Hand-drawn explainer scene">
+          <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Illustrated explainer scene">
             <rect id="stageBg" width="960" height="540" fill="#f8f7f1"/>
             <rect id="stagePat" width="960" height="540" fill="url(#dots)"/>
+            <g id="stagePaper"></g>
             <g id="scene"></g>
           </svg>
           <span class="tag" id="exampleTag">Example</span>
@@ -510,7 +509,6 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
   </footer>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/lucide@1.64.0/dist/umd/lucide.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
@@ -552,9 +550,6 @@ const ICONS = {
   graduation:"M50 20L92 40L50 60L8 40ZM26 50V70C38 82 62 82 74 70V50M92 40V64"
 };
 const ICON_NAMES = Object.keys(ICONS);
-/* Rough.js draws every line as a real sketched stroke; without it, a wobble filter stands in */
-const RG=(window.rough&&window.rough.generator)?window.rough.generator():null;
-const useRough=()=>!!(RG&&THEME.rough);
 function seedOf(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0)%2147483646+1; }
 /* Rewrite path data with explicit separators, including compact arc flags such as "a4 4 0 01-3-4" */
 function normPath(d){
@@ -607,31 +602,58 @@ const hasIcon=n=>!!iconDef(n);
 const LAYOUTS = ["title","statement","icons","flow","compare","list","bars","line","donut","number"];
 let INK="#1c2740", TEAL="#0c8a80", CORAL="#e4533b", MARK="#ffd94d", MUTED="#586480";
 /* ---------- Styles: one look shared by the video, infographic, slides and carousel ---------- */
+/* Exactly three styles. Each sets a palette, three type roles (head, body, note) and its own finishing details. */
 const THEMES={
-  highlighter:{label:"Highlighter",bg:"#fffdf6",pat:"dots",patC:"#ece5cc",ink:"#121212",a1:"#121212",a2:"#f5b700",mark:"#ffd60a",muted:"#5e5e5e",a2Text:"#121212",font:"Excalifont",
-              fontUrl:"https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.18.1/dist/prod/fonts/Excalifont/Excalifont-Regular-a88b72a24fb54c9f94e3b5fdaa7481c9.woff2",rough:true},
-  notebook:  {label:"Notebook",  bg:"#f8f7f1",pat:"dots",patC:"#d9d6c8",ink:"#1c2740",a1:"#0c8a80",a2:"#e4533b",mark:"#ffd94d",muted:"#586480",font:"Patrick Hand",rough:true},
-  chalk:     {label:"Chalkboard",bg:"#24372e",pat:"dots",patC:"#30483c",ink:"#f3f1ea",a1:"#8fd6c4",a2:"#f4a28c",mark:"#46664f",muted:"#b8c7bd",font:"Kalam",rough:true},
-  blueprint: {label:"Blueprint", bg:"#1d4b87",pat:"grid",patC:"#2c5c98",ink:"#f5f9ff",a1:"#9fd3ff",a2:"#ffcf5c",mark:"#2f6cb3",muted:"#c4d6ee",font:"Architects Daughter",rough:true},
-  riso:      {label:"Risograph", bg:"#fbeff2",pat:"dots",patC:"#efcfda",ink:"#262a6b",a1:"#14998b",a2:"#ff4f7b",mark:"#ffe45c",muted:"#5b5e8f",font:"Kalam",rough:true},
-  whiteboard:{label:"Whiteboard",bg:"#ffffff",pat:"grid",patC:"#eef1f4",ink:"#1e1e1e",a1:"#1971c2",a2:"#e03131",mark:"#ffec99",muted:"#495057",font:"Excalifont",
-              fontUrl:"https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.18.1/dist/prod/fonts/Excalifont/Excalifont-Regular-a88b72a24fb54c9f94e3b5fdaa7481c9.woff2",rough:true},
-  clean:     {label:"Clean",     bg:"#ffffff",pat:"none",patC:"#ffffff",ink:"#14213d",a1:"#0f6e8c",a2:"#d9480f",mark:"#fde68a",muted:"#5c6475",font:"Figtree",rough:false}
+  "refined-architectural":{label:"Refined Architectural",
+    bg:"#ffffff",pat:"grid",patC:"#eaeae6",ink:"#1a1a1a",a1:"#1a1a1a",a2:"#dda15e",a2Text:"#8a5a14",mark:"#e9c46a",muted:"#55534e",
+    head:"Host Grotesk",headW:600,font:"Architects Daughter",note:"Architects Daughter",
+    lw:.5,fill:"tint",tint:.16,bar:{t:.85,c:1},rule:"band",frame:"none",iconBack:"none",fig:false,
+    brief:"neat architect's lettering on faint grid paper, deep black ink, ochre highlights and ruler-straight lines"},
+  "vintage-field-journal":{label:"Vintage Field Journal",
+    bg:"#f5f0e6",pat:"dots",patC:"#e6dfd1",grain:true,ink:"#26231f",a1:"#4f6354",a2:"#9e472a",mark:"#e3d6bb",muted:"#4a453e",
+    head:"Newsreader",headW:600,font:"Newsreader",note:"IBM Plex Mono",noteScale:.82,
+    lw:.45,fill:"stipple",tint:.18,bar:{t:1,c:1},rule:"double",frame:"double",iconBack:"stipple",fig:true,
+    brief:"a 19th-century naturalist's field journal: sepia ink on archival paper, serif type, stippled shading and FIG. labels"},
+  "editorial-magazine":{label:"Editorial Magazine",
+    bg:"#f7f4ef",pat:"none",patC:"#f7f4ef",ink:"#1e1c1a",a1:"#5a7363",a2:"#b85c46",mark:"#ecdcd2",muted:"#3e3b37",
+    head:"Lora",headW:600,font:"Inter",note:"Inter",noteScale:.92,
+    lw:.5,fill:"tint",tint:.2,bar:{t:.85,c:.85},rule:"organic",frame:"none",iconBack:"blob",fig:false,
+    brief:"a modern magazine explainer: serif headings, clean sans-serif text and terracotta and sage spot illustrations"}
 };
-let THEME=THEMES.highlighter;
-const fontStack=()=>'"'+THEME.font+'","Segoe Print","Comic Sans MS",cursive';
+const THEME_DEFAULT="refined-architectural";
+let THEME=THEMES[THEME_DEFAULT];
+const FALLBACK={"Architects Daughter":'"Segoe Print","Inter",sans-serif',"Host Grotesk":'"Inter","Helvetica Neue",Arial,sans-serif',"Inter":'"Helvetica Neue",Arial,sans-serif',
+  "Newsreader":'Georgia,"Times New Roman",serif',"Lora":'Georgia,"Times New Roman",serif',"IBM Plex Mono":'"Courier New",monospace'};
+const famOf=role=>role==="head"?THEME.head:role==="note"?THEME.note:THEME.font;
+const fontStack=role=>{ const f=famOf(role); return '"'+f+'",'+(FALLBACK[f]||"sans-serif"); };
+const weightOf=role=>role==="head"?THEME.headW:400;
 function applyTheme(k){
-  THEME=THEMES[k]||THEMES.highlighter;
+  THEME=THEMES[k]||THEMES[THEME_DEFAULT];
   INK=THEME.ink; TEAL=THEME.a1; CORAL=THEME.a2; MARK=THEME.mark; MUTED=THEME.muted;
   document.documentElement.style.setProperty("--sketch",fontStack());
   $("dotC").setAttribute("fill",THEME.patC); $("gridP").setAttribute("stroke",THEME.patC);
-  $("hatchTL").setAttribute("stroke",THEME.a1); $("hatchCL").setAttribute("stroke",THEME.a2);
+  document.querySelectorAll(".stipTC").forEach(e=>e.setAttribute("fill",THEME.a1)); document.querySelectorAll(".stipCC").forEach(e=>e.setAttribute("fill",THEME.a2));
+  document.querySelectorAll(".xhTL").forEach(e=>e.setAttribute("stroke",THEME.a1)); document.querySelectorAll(".xhCL").forEach(e=>e.setAttribute("stroke",THEME.a2));
   $("stageBg").setAttribute("fill",THEME.bg); $("stagePat").setAttribute("fill",patFill());
+  $("stagePaper").replaceChildren(...paperLayers(960,540));
 }
 const patFill=()=>THEME.pat==="none"?"none":"url(#"+THEME.pat+")";
+/* paper finish laid over the background: archival grain and a printed plate border for the field journal */
+function paperLayers(w,h){
+  const out=[];
+  if(THEME.grain) out.push(S("rect",{width:w,height:h,filter:"url(#grain)",opacity:.05}));
+  if(THEME.frame==="double"){
+    const m=Math.round(Math.min(w,h)*0.026);
+    out.push(S("rect",{x:m,y:m,width:w-2*m,height:h-2*m,fill:"none",stroke:"#c8bfa8","stroke-width":Math.max(1,w/960)}));
+    out.push(S("rect",{x:m+4*w/960,y:m+4*w/960,width:w-2*m-8*w/960,height:h-2*m-8*w/960,fill:"none",stroke:"#dfd8c8","stroke-width":Math.max(1,w/960)}));
+  }
+  return out;
+}
+const pad2=n=>String(n).padStart(2,"0");
+const pageTag=(i,n,sep)=>THEME.fig?"FIG. "+pad2(i+1)+" / "+pad2(n):(i+1)+(sep==null?" / ":sep)+n;
 /* Measure text in the style's own font, so wrapping fits whichever font is chosen */
 const mctx=document.createElement("canvas").getContext("2d");
-function measure(str,size){ mctx.font=size+"px "+fontStack(); return mctx.measureText(String(str||"")).width; }
+function measure(str,size,role){ mctx.font=weightOf(role)+" "+size+"px "+fontStack(role); return mctx.measureText(String(str||"")).width; }
 
 function S(name, attrs, text){
   const e=document.createElementNS(NS,name);
@@ -639,70 +661,88 @@ function S(name, attrs, text){
   if(text!=null) e.textContent=text;
   return e;
 }
-function wrap(str, size, maxW){
+function wrap(str, size, maxW, role){
   const words=String(str||"").trim().split(/\s+/).filter(Boolean), lines=[]; let cur="";
   for(const w of words){
-    if(cur && measure(cur+" "+w,size)>maxW){ lines.push(cur); cur=w; } else cur=cur?cur+" "+w:w;
+    if(cur && measure(cur+" "+w,size,role)>maxW){ lines.push(cur); cur=w; } else cur=cur?cur+" "+w:w;
   }
   if(cur) lines.push(cur);
   return lines;
 }
+function blobPath(cx,cy,r,seed){                /* a soft organic shape for editorial spot art */
+  const n=6, P=[];
+  for(let i=0;i<n;i++){ const a=i/n*2*Math.PI+seed, k=0.8+0.22*Math.abs(Math.sin(seed*3.1+i*1.7)); P.push([cx+Math.cos(a)*r*k*1.08,cy+Math.sin(a)*r*k*0.92]); }
+  let d="M"+P[0][0].toFixed(1)+" "+P[0][1].toFixed(1);
+  for(let i=0;i<n;i++){ const p0=P[(i-1+n)%n],p1=P[i],p2=P[(i+1)%n],p3=P[(i+2)%n];
+    d+="C"+(p1[0]+(p2[0]-p0[0])/6).toFixed(1)+" "+(p1[1]+(p2[1]-p0[1])/6).toFixed(1)+" "+(p2[0]-(p3[0]-p1[0])/6).toFixed(1)+" "+(p2[1]-(p3[1]-p1[1])/6).toFixed(1)+" "+p2[0].toFixed(1)+" "+p2[1].toFixed(1); }
+  return d+"Z";
+}
 function Board(still){
-  const g=S("g"), shapes=S("g",(THEME.rough&&!RG)?{filter:still?"url(#roughStill)":"url(#rough)"}:{}), texts=S("g");
+  const g=S("g"), shapes=S("g"), texts=S("g");
   g.append(shapes,texts);
   let t=0.15;
   const b={
     g,
     get time(){ return t; },
+    /* every line is a clean, even fine-liner stroke; o.raw keeps the width exactly as given */
     stroke(d,o){ o=o||{};
-      const color=o.color||INK, w=o.w||4;
-      let infos=null;
-      if(useRough()){
-        try{ infos=RG.toPaths(RG.path(normPath(d),{stroke:color,strokeWidth:w,roughness:o.rough||1,bowing:1,
-          maxRandomnessOffset:1.8/(o.scale||1),disableMultiStroke:!!o.opacity,seed:seedOf(d+color)})); }catch(e){ infos=null; }
-      }
+      const color=o.color||INK, w=(o.w||4)*(o.raw?1:THEME.lw);
       const grp=S("g");
       if(o.transform) grp.setAttribute("transform",o.transform);
       if(o.opacity) grp.setAttribute("opacity",o.opacity);
-      (infos&&infos.length?infos:[{d,stroke:color,strokeWidth:w}]).forEach(pi=>{
-        if(!pi.d||pi.stroke==="none") return;
-        const p=S("path",{d:pi.d, pathLength:1, class:"ink", stroke:pi.stroke||color, "stroke-width":pi.strokeWidth||w});
-        p.style.setProperty("--d",t+"s"); p.style.setProperty("--dur",(o.dur||0.6)+"s"); grp.append(p);
-      });
+      const p=S("path",{d, pathLength:1, class:"ink", stroke:color, "stroke-width":w});
+      p.style.setProperty("--d",t+"s"); p.style.setProperty("--dur",(o.dur||0.6)+"s"); grp.append(p);
       shapes.append(grp); t+= (o.step==null?0.4:o.step); return grp; },
-    /* a filled shape: hand-hatched with Rough.js, a soft tint otherwise */
+    /* a filled shape: stippled in the field journal, a flat tint otherwise */
     fill(d,color,o){ o=o||{};
       const grp=S("g",{class:"fade"}); grp.style.setProperty("--d",t+"s");
-      let infos=null;
-      if(useRough()){
-        try{ infos=RG.toPaths(RG.path(normPath(d),{fill:color,fillStyle:o.style||"hachure",hachureGap:o.gap||7,fillWeight:o.weight||2.2,
-          hachureAngle:o.angle==null?-41:o.angle,stroke:"none",roughness:1,seed:seedOf(d+color+"f")})); }catch(e){ infos=null; }
-      }
-      if(infos&&infos.length) infos.forEach(pi=>{ if(!pi.d) return;
-        if(pi.fill&&pi.fill!=="none") grp.append(S("path",{d:pi.d,fill:pi.fill,stroke:"none"}));
-        else if(pi.stroke&&pi.stroke!=="none") grp.append(S("path",{d:pi.d,fill:"none",stroke:pi.stroke,"stroke-width":pi.strokeWidth||2,"stroke-linecap":"round"})); });
-      else grp.append(S("path",{d,fill:color,"fill-opacity":o.solid?1:0.32}));
+      if(o.solid) grp.append(S("path",{d,fill:color}));
+      else if(THEME.fill==="stipple"&&(color===TEAL||color===CORAL)) grp.append(S("path",{d,fill:"url(#"+(color===CORAL?"stipC":"stipT")+")"}));
+      else grp.append(S("path",{d,fill:color,"fill-opacity":color===MARK?0.9:THEME.tint}));
       shapes.append(grp); t+=0.12; return grp; },
+    /* the style's emphasis rule under a line of text whose baseline is at y */
+    mark(x1,x2,y,size){
+      if(THEME.rule==="band"){ const r=S("rect",{x:x1,y:y-size*0.36,width:Math.max(4,x2-x1),height:size*0.44,fill:MARK,opacity:.62,class:"fade"});
+        r.style.setProperty("--d",t+"s"); shapes.append(r); t+=0.2; return; }
+      b.rule(x1,x2,y+size*0.24,size); },
+    rule(x1,x2,y,size){
+      const k=Math.max(1,(size||46)/46);
+      if(THEME.rule==="double"){
+        b.stroke("M"+x1+" "+y+"H"+x2,{color:CORAL,w:1.8*k,raw:true,step:.1,dur:.5});
+        b.stroke("M"+x1+" "+(y+5*k)+"H"+x2,{color:TEAL,w:1*k,raw:true,step:.2,dur:.5}); return; }
+      if(THEME.rule==="organic"){ const L=x2-x1, a=4*k;
+        b.stroke("M"+x1+" "+y+"C"+(x1+L*.25)+" "+(y-a)+" "+(x1+L*.4)+" "+(y+a)+" "+(x1+L*.6)+" "+y+"S"+(x1+L*.9)+" "+(y-a*0.6)+" "+x2+" "+(y+a*0.3),{color:CORAL,w:2.6*k,raw:true,step:.2,dur:.6}); return; }
+      b.stroke("M"+x1+" "+y+"H"+x2,{color:CORAL,w:3*k,raw:true,step:.2,dur:.5}); },
     solid(d,color){ const p=S("path",{d,fill:color}); shapes.append(p); return p; },
     icon(name,x,y,size,color){
       const ic=iconDef(name); if(!ic) return false;
       const s=size/ic.box;
-      b.stroke(ic.d,{transform:"translate("+x+" "+y+") scale("+s+")", w:(ic.box===24?3.4:4)/s, scale:s, color:color||INK, dur:0.9, step:0.55});
+      if(THEME.iconBack!=="none"){
+        const cx=x+size*0.56, cy=y+size*0.56, r=size*0.42, back=color===CORAL?CORAL:TEAL;
+        const sh=THEME.iconBack==="blob"?S("path",{d:blobPath(cx,cy,r,seedOf(name)%6),fill:back,"fill-opacity":.13,class:"fade"})
+                                         :S("circle",{cx,cy,r,fill:"url(#"+(back===CORAL?"stipC":"stipT")+")",opacity:.55,class:"fade"});
+        sh.style.setProperty("--d",t+"s"); shapes.append(sh);
+      }
+      b.stroke(ic.d,{transform:"translate("+x+" "+y+") scale("+s+")", w:(ic.box===24?2.6:3)*Math.max(1,size/120)/s, raw:true, color:color||INK, dur:0.9, step:0.55});
       return true; },
     numberDot(n,cx,cy,r){
       b.stroke("M"+cx+" "+(cy-r)+"a"+r+" "+r+" 0 1 0 .01 0",{color:TEAL,w:4,step:0.3});
       b.text(String(n),cx,cy+r*0.33,{size:r*1.1,anchor:"middle",color:TEAL,step:0.2}); },
-    hatch(x,y,w,h,id){
-      if(useRough()){ w=Math.max(2,w); b.fill("M"+x+" "+y+"H"+(x+w)+"V"+(y+h)+"H"+x+"Z",id==="hatchC"?CORAL:TEAL,{angle:id==="hatchC"?50:-41}); return; }
-      const r=S("rect",{x,y,width:Math.max(2,w),height:h,fill:"url(#"+id+")",class:"fade"});
+    hatch(x,y,w,h,id){                       /* a bar: cross-hatched in the field journal, a flat fill otherwise */
+      const c=id==="hatchC", attrs={x,y,width:Math.max(2,w),height:h,class:"fade"};
+      if(THEME.fill==="stipple") attrs.fill="url(#"+(c?"xhC":"xhT")+")";
+      else { attrs.fill=c?(THEME.rule==="band"?MARK:CORAL):TEAL; attrs["fill-opacity"]=c?THEME.bar.c:THEME.bar.t; }
+      const r=S("rect",attrs);
       r.style.setProperty("--d",t+"s"); shapes.append(r); t+=0.15; },
     text(str,x,y,o){ o=o||{};
-      const size=o.size||30, lines=o.maxW?wrap(str,size,o.maxW):[String(str||"")];
+      const role=o.role||(o.color===MUTED?"note":"body");
+      const size=(o.size||30)*(role==="note"?(THEME.noteScale||1):1), lines=o.maxW?wrap(str,size,o.maxW,role):[String(str||"")];
       const lim=o.maxLines||lines.length;
       const use=lines.slice(0,lim); if(lines.length>lim) use[lim-1]=use[lim-1]+"…";
       const lh=size*1.15;
       let fillC=o.color||INK; if(THEME.a2Text&&fillC===CORAL) fillC=THEME.a2Text;   /* light accents stay readable as text */
       const te=S("text",{x,y,"font-size":size,"text-anchor":o.anchor||"start",fill:fillC,class:"write"});
+      te.style.fontFamily=fontStack(role); te.style.fontWeight=weightOf(role);
       use.forEach((ln,i)=>{ te.append(S("tspan",{x,dy:i?lh:0},ln)); });
       te.style.setProperty("--d",t+"s"); texts.append(te); t+=(o.step==null?0.3:o.step);
       return use.length*lh; }
@@ -711,10 +751,10 @@ function Board(still){
 }
 function heading(b,sc){
   if(!sc.heading) return 60;
-  const lines=wrap(sc.heading,46,840).slice(0,2);
-  const w=Math.min(840, Math.max(...lines.map(l=>measure(l,46)))+20);
-  b.stroke("M56 "+(88+(lines.length-1)*53)+"H"+(56+w),{color:MARK,w:26,opacity:.75,dur:.5,step:.2});
-  const h=b.text(sc.heading,60,100,{size:46,maxW:840,maxLines:2,step:.45});
+  const lines=wrap(sc.heading,46,840,"head").slice(0,2);
+  const w=Math.min(840, measure(lines[lines.length-1],46,"head")+8);
+  b.mark(56,60+w,100+(lines.length-1)*53,46);
+  const h=b.text(sc.heading,60,100,{size:46,maxW:840,maxLines:2,step:.45,role:"head"});
   return 100+h-20;
 }
 function arrow(b,x1,y,x2){ b.stroke("M"+x1+" "+y+"H"+x2+"M"+(x2-14)+" "+(y-11)+"L"+x2+" "+y+"L"+(x2-14)+" "+(y+11),{color:CORAL,w:4.5,dur:.4,step:.35}); }
@@ -764,11 +804,11 @@ const RENDER = {
   title(b,sc){
     const ic=(sc.items[0]&&hasIcon(sc.items[0].icon))?sc.items[0].icon:"graduation";
     b.icon(ic,420,40,120,TEAL);
-    const lines=wrap(sc.heading,58,820).slice(0,3);
+    const lines=wrap(sc.heading,58,820,"head").slice(0,3);
     const y0=250-(lines.length-1)*20;
-    const h=b.text(sc.heading,480,y0,{size:58,maxW:820,maxLines:3,anchor:"middle",step:.5});
+    const h=b.text(sc.heading,480,y0,{size:58,maxW:820,maxLines:3,anchor:"middle",step:.5,role:"head"});
     const uy=y0+h-40;
-    b.stroke("M300 "+uy+"C360 "+(uy-12)+" 420 "+(uy+12)+" 480 "+uy+"S600 "+(uy-12)+" 660 "+uy,{color:CORAL,w:5,dur:.6});
+    b.rule(330,630,uy,58);
     if(sc.note) b.text(sc.note,480,uy+52,{size:30,maxW:800,maxLines:2,anchor:"middle",color:MUTED});
   },
   statement(b,sc){
@@ -840,7 +880,7 @@ const RENDER = {
   number(b,sc){
     const top=heading(b,sc), txt=String(sc.highlight||"").slice(0,12), cy=top+150;
     const size=txt.length>7?96:140, rx=Math.max(150,txt.length*size*0.3+60), ry=size*0.62;
-    b.text(txt,480,cy+size*0.34,{size,anchor:"middle",color:TEAL,step:.5});
+    b.text(txt,480,cy+size*0.34,{size,anchor:"middle",color:TEAL,step:.5,role:"head"});
     b.stroke("M"+(480-rx)+" "+cy+"a"+rx+" "+ry+" 0 1 1 "+(2*rx)+" 0a"+rx+" "+ry+" 0 1 1 "+(-2*rx-10)+" -8",{color:CORAL,w:5,dur:.9});
     if(sc.note) b.text(sc.note,480,cy+ry+56,{size:32,maxW:780,maxLines:3,anchor:"middle"});
   }
@@ -848,6 +888,7 @@ const RENDER = {
 function drawScene(sc, animate){
   const b=Board();
   (RENDER[sc.layout]||RENDER.statement)(b,sc);
+  if(THEME.fig&&P.story) b.text(pageTag(P.idx,P.story.scenes.length),920,40,{size:15,anchor:"end",color:MUTED,step:0});
   b.g.setAttribute("class",animate?"anim":"still");
   $("scene").replaceChildren(b.g);
   return b.time;
@@ -857,20 +898,20 @@ function drawScene(sc, animate){
 const SAMPLE = {
   title:"How MyPhD Studio works", authors:"Example video", isSample:true,
   scenes:[
-    {layout:"title",mood:"curious",heading:"Your paper, as a hand-drawn explainer",note:"Example video. Replace it with your own paper.",highlight:"",items:[],
+    {layout:"title",mood:"curious",heading:"Your paper, as an illustrated explainer",note:"Example video. Replace it with your own paper.",highlight:"",items:[],
      narration:"Most research papers reach a handful of readers. What if yours could reach thousands, in two minutes?"},
-    {layout:"statement",mood:"curious",heading:"Good studies go unread",note:"A dense PDF asks a lot from a busy reader. A two minute sketch asks very little.",highlight:"",items:[{icon:"document",label:"",detail:""}],
-     narration:"The problem is not the research. A dense PDF asks a lot from a busy person, so most people stop at the abstract. A two minute sketch asks very little. So how does it work?"},
+    {layout:"statement",mood:"curious",heading:"Good studies go unread",note:"A dense PDF asks a lot from a busy reader. A two minute explainer asks very little.",highlight:"",items:[{icon:"document",label:"",detail:""}],
+     narration:"The problem is not the research. A dense PDF asks a lot from a busy person, so most people stop at the abstract. A two minute explainer asks very little. So how does it work?"},
     {layout:"flow",mood:"warm",heading:"Three steps and a play button",note:"",highlight:"",items:[{icon:"document",label:"Add your PDF",detail:""},{icon:"pencil",label:"Copy the prompt",detail:""},{icon:"chat",label:"Paste Claude's reply",detail:""},{icon:"happy",label:"Watch it draw",detail:""}],
      narration:"You add your PDF, copy the prompt into a Claude chat, and paste the reply back here. Then you press play and the video draws itself."},
-    {layout:"compare",mood:"calm",heading:"Who does what",note:"",highlight:"",items:[{icon:"robot",label:"Claude",detail:"Writes the script and chooses a layout for every scene"},{icon:"pencil",label:"MyPhD Studio",detail:"Draws the sketches and reads the script aloud"}],
-     narration:"Claude reads the paper, writes the script and chooses a layout for every scene. MyPhD Studio draws the sketches and reads the script aloud."},
+    {layout:"compare",mood:"calm",heading:"Who does what",note:"",highlight:"",items:[{icon:"robot",label:"Claude",detail:"Writes the script and chooses a layout for every scene"},{icon:"pencil",label:"MyPhD Studio",detail:"Draws the illustrations and reads the script aloud"}],
+     narration:"Claude reads the paper, writes the script and chooses a layout for every scene. MyPhD Studio draws the illustrations and reads the script aloud."},
     {layout:"bars",mood:"warm",heading:"Pick a length",note:"Most scenes each length setting allows",highlight:"",items:[{label:"1 minute",value:6,display:"6 scenes"},{label:"3 minutes",value:12,display:"12 scenes"},{label:"5 minutes",value:20,display:"20 scenes"},{label:"10 minutes",value:36,display:"36 scenes"}],
      narration:"You choose how long the video runs, from one minute to ten. A one minute video has up to six scenes. A ten minute mini lecture can have more than thirty."},
     {layout:"list",mood:"serious",heading:"It stays close to the paper",note:"",highlight:"",items:[{label:"Only numbers that appear in the paper",detail:""},{label:"The main limitation gets its own scene",detail:""},{label:"Doubts are listed under the video",detail:""}],
      narration:"The script may only use numbers that appear in the paper. The main limitation gets its own scene, and anything Claude was unsure about is listed under the video for you to check."},
-    {layout:"number",mood:"surprised",heading:"A small sketch kit",note:"layouts to draw with, from flow charts to bar charts",highlight:"8",items:[],
-     narration:"And the whole sketch kit? Just eight layouts. A flow chart, a comparison, a bar chart, one big number, and a few more. That is all it takes."},
+    {layout:"number",mood:"surprised",heading:"A small illustration kit",note:"layouts to draw with, from flow charts to bar charts",highlight:"8",items:[],
+     narration:"And the whole illustration kit? Just eight layouts. A flow chart, a comparison, a bar chart, one big number, and a few more. That is all it takes."},
     {layout:"statement",mood:"excited",heading:"Now try your own paper",note:"Add a PDF in step one. Your first draft is three steps away.",highlight:"",items:[{icon:"lightbulb",label:"",detail:""}],
      narration:"That is the whole idea. Now it is your turn! Add your own paper in step one, and your first video is just three steps away."}
   ],
@@ -1197,9 +1238,7 @@ $("full").addEventListener("click",()=>{
   try{ if(document.fullscreenElement) document.exitFullscreen(); else el.requestFullscreen().catch(()=>setStatus("playStatus","Full screen is not available in this view.","bad")); }
   catch(e){ setStatus("playStatus","Full screen is not available in this view.","bad"); }
 });
-/* The wobble that makes lines look redrawn frame by frame */
 const calm = window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches;
-let seed=2; setInterval(()=>{ if(P.playing && !calm){ seed=seed%4+1; $("turb").setAttribute("seed",seed); } }, 190);
 
 /* ---------- Voice ---------- */
 function fillVoices(){
@@ -1355,7 +1394,7 @@ function buildVideoPrompt(){
   const lang=$("lang").value==="ms"?"Bahasa Melayu":"English";
   return `Please write the storyboard for my MyPhD Studio app, following these instructions exactly.
 
-You are the scriptwriter for MyPhD Studio, an app that turns a research paper into a short hand-drawn animated explainer video. The app draws every scene from fixed sketch layouts and reads your narration aloud, so you only supply the content, as JSON matching the schema below. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
+You are the scriptwriter for MyPhD Studio, an app that turns a research paper into a short, illustrated, animated explainer video. The app draws every scene from fixed illustration layouts and reads your narration aloud, so you only supply the content, as JSON matching the schema below. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
 
 Accuracy comes first:
 - Report only what the paper says. Never invent findings, numbers, sample sizes, measures, quotes or author names. If the paper does not state something, leave it out.
@@ -1402,8 +1441,8 @@ Audience: ${AUDIENCES[$("audience").value]}
 
 Layouts:
 - "title": the hook scene. The video title in "heading", authors and year in "note", the hook in "narration".
-- "statement": one sketch on the left and one sentence in "note". Use it for the question, the limitation and the takeaway.
-- "icons": 2 to 4 sketches side by side with labels, for who took part or what was measured.
+- "statement": one illustration on the left and one sentence in "note". Use it for the question, the limitation and the takeaway.
+- "icons": 2 to 4 illustrations side by side with labels, for who took part or what was measured.
 - "flow": 2 to 4 steps joined by arrows, for the procedure or for a chain such as predictor, mediator and outcome.
 - "compare": two panels side by side, for two groups, two conditions or before and after.
 - "list": 2 to 4 short points with tick marks.
@@ -1572,11 +1611,13 @@ ${body.trim()}`;
   const keyList=["mode","category"].concat(keys).map(x=>'"'+x+'"'), keyText=keyList.slice(0,-1).join(", ")+" and "+keyList[keyList.length-1];
   let out=`Please write the content for my MyPhD Studio app, following these instructions exactly.
 
-You are the writer for MyPhD Studio, an app that turns ${topic?"a psychology topic":"a research paper"} into hand-drawn formats. This time I need ${n}: ${nameList}. The app draws every format from fixed hand-drawn layouts, so you only supply the content, as JSON matching the schemas at the end. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
+You are the writer for MyPhD Studio, an app that turns ${topic?"a psychology topic":"a research paper"} into illustrated formats. This time I need ${n}: ${nameList}. The app draws every format from fixed illustrated layouts, so you only supply the content, as JSON matching the schemas at the end. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
 
 ${accuracy}
 
 ${aud}
+
+The page will draw everything in the "${THEME.label}" style, ${THEME.brief}. Keep the wording calm and scholarly to match, and choose icons that read well as clean, single-weight line art.
 
 Write all ${n} formats. Each one stands on its own, so do not refer from one format to another.
 
@@ -1670,19 +1711,19 @@ function showCautions(list){
 
 /* ---------- Drawing helpers shared by the still outputs ---------- */
 function sketchSvg(w,h,label){
-  const svg=S("svg",{viewBox:"0 0 "+w+" "+h,width:w,height:h,class:"sketch",role:"img","aria-label":label||"Hand-drawn graphic"});
-  svg.append(S("rect",{width:w,height:h,fill:THEME.bg}),S("rect",{width:w,height:h,fill:patFill()}));
+  const svg=S("svg",{viewBox:"0 0 "+w+" "+h,width:w,height:h,class:"sketch",role:"img","aria-label":label||"Illustrated graphic"});
+  svg.append(S("rect",{width:w,height:h,fill:THEME.bg}),S("rect",{width:w,height:h,fill:patFill()}),...paperLayers(w,h));
   return svg;
 }
 function boxPath(x,y,w,h,r){ r=r||18;
   return "M"+(x+r)+" "+y+"H"+(x+w-r)+"Q"+(x+w)+" "+y+" "+(x+w)+" "+(y+r)+"V"+(y+h-r)+"Q"+(x+w)+" "+(y+h)+" "+(x+w-r)+" "+(y+h)+"H"+(x+r)+"Q"+x+" "+(y+h)+" "+x+" "+(y+h-r)+"V"+(y+r)+"Q"+x+" "+y+" "+(x+r)+" "+y; }
-function ovalPath(cx,cy,rx,ry){ return "M"+(cx-rx)+" "+cy+"a"+rx+" "+ry+" 0 1 1 "+(2*rx)+" 0a"+rx+" "+ry+" 0 1 1 "+(-2*rx-10)+" -8"; }
+function ovalPath(cx,cy,rx,ry){ return "M"+(cx-rx)+" "+cy+"a"+rx+" "+ry+" 0 1 1 "+(2*rx)+" 0a"+rx+" "+ry+" 0 1 1 "+(-2*rx)+" 0"; }
 function lineCount(str,size,maxW,maxLines){ const n=wrap(str,size,maxW).length; return Math.max(1,maxLines?Math.min(n,maxLines):n); }
-function textW(str,size){ return measure(str,size); }
-function markHead(b,txt,x,y,size,maxW){         /* heading with a marker-pen highlight behind its first line */
-  const first=wrap(txt,size,maxW)[0]||"";
-  b.stroke("M"+(x-4)+" "+(y-size*0.25)+"H"+(x+Math.min(maxW,textW(first,size)+16)),{color:MARK,w:size*0.55,opacity:.75});
-  return b.text(txt,x,y,{size,maxW,maxLines:3});
+function textW(str,size,role){ return measure(str,size,role); }
+function markHead(b,txt,x,y,size,maxW){         /* section heading with the style's emphasis under its first line */
+  const first=wrap(txt,size,maxW,"head")[0]||"";
+  b.mark(x-4,x+Math.min(maxW,textW(first,size,"head")+6),y,size);
+  return b.text(txt,x,y,{size,maxW,maxLines:3,role:"head"});
 }
 
 /* ---------- Image and file export ---------- */
@@ -1699,21 +1740,21 @@ function loadLib(k){
 }
 const blobToDataURL=b=>new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(b); });
 const fontCss={};
-function embeddedFont(){                      /* the style's font, inlined so exported images keep it */
-  const fam=THEME.font;
-  if(!fontCss[fam]) fontCss[fam]=(async()=>{
-    if(THEME.fontUrl){
-      try{ return '@font-face{font-family:"'+fam+'";src:url('+(await blobToDataURL(await (await fetch(THEME.fontUrl)).blob()))+') format("woff2")}'; }catch(e){ return ""; }
-    }
+const GFAM={"Architects Daughter":"Architects+Daughter","Host Grotesk":"Host+Grotesk:wght@400;600","Inter":"Inter:wght@400;600",
+  "Newsreader":"Newsreader:wght@400;600","Lora":"Lora:wght@400;600","IBM Plex Mono":"IBM+Plex+Mono:wght@400"};
+function embeddedFont(){                      /* the style's fonts, inlined so exported images keep them */
+  const fams=[...new Set([THEME.head,THEME.font,THEME.note])], key=fams.join("|");
+  if(!fontCss[key]) fontCss[key]=(async()=>{
     try{
-      let css=await (await fetch("https://fonts.googleapis.com/css2?family="+fam.replace(/ /g,"+")+(fam==="Figtree"?":wght@400;600":"")+"&display=block")).text();
+      let css=await (await fetch("https://fonts.googleapis.com/css2?"+fams.map(f=>"family="+GFAM[f]).join("&")+"&display=block")).text();
+      if(css.includes("/* latin */")) css=css.split(/(?=\/\* [a-z-]+ \*\/)/).filter(bl=>bl.startsWith("/* latin */")).join("");
       for(const u of [...new Set([...css.matchAll(/url\((https:[^)]+)\)/g)].map(m=>m[1]))]){
         css=css.split(u).join(await blobToDataURL(await (await fetch(u)).blob()));
       }
       return css;
     }catch(e){ return ""; }
   })();
-  return fontCss[fam];
+  return fontCss[key];
 }
 async function svgToPng(svg,scale,jpeg){
   const w=+svg.getAttribute("width"), h=+svg.getAttribute("height");
@@ -1777,7 +1818,7 @@ JSON Schema (for reference only, do not repeat it in your reply):
 ${JSON.stringify(sch)}`;
 }
 const cautionsField={type:"array",items:{type:"string"},description:"Anything simplified, uncertain or unclear in the text that the user should check against the paper. Can be empty."};
-const iconField=d=>({type:"string",description:"A sketch to draw. Use one of our hand-drawn favourites when it fits ("+ICON_NAMES.join(", ")+"). Otherwise use any Lucide icon name in kebab-case, as listed at lucide.dev/icons, choosing the most specific one that exists, for example 'smartphone', 'message-circle', 'users', 'heart-pulse', 'flask-conical', 'school', 'pill' or 'baby'. Use an empty string for none."+(d?" "+d:"")});
+const iconField=d=>({type:"string",description:"An icon to draw as clean line art. Use one of our built-in icons when it fits ("+ICON_NAMES.join(", ")+"). Otherwise use any Lucide icon name in kebab-case, as listed at lucide.dev/icons, choosing the most specific one that exists, for example 'smartphone', 'message-circle', 'users', 'heart-pulse', 'flask-conical', 'school', 'pill' or 'baby'. Use an empty string for none."+(d?" "+d:"")});
 const barItem={type:"object",properties:{label:{type:"string",description:"Bar name, 1 to 4 words."},value:{type:"number",description:"The figure from the paper that sizes the bar."},display:{type:"string",description:"The value as shown, e.g. '63%' or '4.2 out of 7'."}},required:["label","value","display"],additionalProperties:false};
 const plainStats="Translate statistics into plain meaning that matches the authors' interpretation, for example \"a moderate link\" or \"about twice as likely\". Exact figures may appear where a field asks for a number.";
 
@@ -1788,7 +1829,7 @@ function infoSchema(){
     title:{type:"string",description:"The research question as a curious reader would ask it, under 11 words. Not the paper's title."},
     citation:{type:"string",description:"Authors, year and journal as given in the paper, e.g. 'Lee & Tan (2023), Computers in Human Behavior'."},
     answer:{type:"string",description:"The short answer: the main finding in one plain sentence, under 26 words, with the authors' level of certainty."},
-    heroIcon:iconField("The sketch that best stands for the topic."),
+    heroIcon:iconField("The illustration that best stands for the topic."),
     keyStats:{type:"array",maxItems:3,description:"Up to 3 headline figures from the paper, such as the sample size or the main result in readable form. Can be empty.",items:{type:"object",properties:{
       value:{type:"string",description:"The figure as shown, at most 8 characters, e.g. '312' or '41%'."},
       label:{type:"string",description:"What it means, under 9 words."}},required:["value","label"],additionalProperties:false}},
@@ -1810,7 +1851,7 @@ function infoSchema(){
 function buildInfoPrompt(){
   return `Please write the content for a one-page infographic in my MyPhD Studio app, following these instructions exactly.
 
-You are the writer for MyPhD Studio, an app that turns a research paper into a hand-drawn infographic. The app draws a fixed one-page layout from top to bottom: title, short answer, key numbers, how they did it, what they found, an optional chart, a limitation box and a takeaway. You only supply the content, as JSON matching the schema below. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
+You are the writer for MyPhD Studio, an app that turns a research paper into an illustrated infographic. The app draws a fixed one-page layout from top to bottom: title, short answer, key numbers, how they did it, what they found, an optional chart, a limitation box and a takeaway. You only supply the content, as JSON matching the schema below. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
 
 ${accuracyRules("Always include the study's main limitation.")}
 
@@ -1819,7 +1860,7 @@ Writing:
 - Every text is short and plain, in ${LANG()}. One idea per sentence. Explain any abbreviation, or avoid it.
 - ${plainStats}
 - Key numbers must be figures the paper reports. An empty list is better than a weak or guessed number.
-- Choose sketches that a reader would understand without a label.
+- Choose illustrations that a reader would understand without a label.
 
 Audience: ${AUDIENCES[$("audience").value]}
 
@@ -1841,11 +1882,11 @@ function drawInfographic(d){
   const W=1200, b=Board(true); let y=78;
   b.text((d.category&&d.category.field?d.category.field+(d.mode==="topic"?" · explained on one page":" · research on one page"):d.mode==="topic"?"Psychology on one page":"Research on one page").toUpperCase(),80,y,{size:24,maxW:1040,maxLines:1,color:TEAL});
   y+=86;
-  const tLines=wrap(d.title,64,1040).slice(0,3);
-  b.text(d.title,80,y,{size:64,maxW:1040,maxLines:3});
+  const tLines=wrap(d.title,64,1040,"head").slice(0,3);
+  b.text(d.title,80,y,{size:64,maxW:1040,maxLines:3,role:"head"});
   y+=(tLines.length-1)*64*1.15;
-  const lastW=Math.min(1040,textW(tLines[tLines.length-1],64));
-  b.stroke("M78 "+(y+20)+"C"+(78+lastW*0.3)+" "+(y+10)+" "+(78+lastW*0.7)+" "+(y+30)+" "+(82+lastW)+" "+(y+16),{color:CORAL,w:6});
+  const lastW=Math.min(1040,textW(tLines[tLines.length-1],64,"head"));
+  b.rule(80,82+lastW,y+22,64);
   y+=66;
   if(d.citation){ y+=b.text(d.citation,80,y,{size:26,maxW:1040,maxLines:2,color:MUTED}); }
   y+=34;
@@ -1860,9 +1901,9 @@ function drawInfographic(d){
   if(d.keyStats.length){
     const n=d.keyStats.length, colW=1080/n;
     d.keyStats.forEach((k,i)=>{
-      const cx=60+colW*(i+.5), sz=k.value.length>5?62:84, rx=Math.min(colW/2-20,Math.max(110,textW(k.value,sz)/2+50));
+      const cx=60+colW*(i+.5), sz=k.value.length>5?62:84, rx=Math.min(colW/2-20,Math.max(110,textW(k.value,sz,"head")/2+50));
       b.stroke(ovalPath(cx,y+56,rx,70),{color:i%2?CORAL:TEAL,w:4});
-      b.text(k.value,cx,y+56+sz*0.34,{size:sz,anchor:"middle",color:i%2?CORAL:TEAL});
+      b.text(k.value,cx,y+56+sz*0.34,{size:sz,anchor:"middle",color:i%2?CORAL:TEAL,role:"head"});
       b.text(k.label,cx,y+172,{size:27,maxW:colW-40,maxLines:2,anchor:"middle"});
     });
     y+=262;
@@ -1923,10 +1964,10 @@ function drawInfographic(d){
   }
   /* takeaway */
   if(d.takeaway){
-    const tk=wrap(d.takeaway,46,1000).slice(0,3);
+    const tk=wrap(d.takeaway,46,1000,"head").slice(0,3);
     y+=30;
-    tk.forEach((ln,i)=>{ const yy=y+i*53, w=textW(ln,46)+30; b.stroke("M"+(600-w/2)+" "+(yy-12)+"H"+(600+w/2),{color:MARK,w:30,opacity:.75}); });
-    b.text(d.takeaway,600,y,{size:46,maxW:1000,maxLines:3,anchor:"middle"});
+    tk.forEach((ln,i)=>{ const yy=y+i*53, w=textW(ln,46,"head")+16; b.mark(600-w/2,600+w/2,yy,46); });
+    b.text(d.takeaway,600,y,{size:46,maxW:1000,maxLines:3,anchor:"middle",role:"head"});
     y+=(tk.length-1)*53+70;
   }
   /* footer */
@@ -1963,7 +2004,7 @@ $("infoPdf").addEventListener("click",ev=>busy(ev.currentTarget,"infoStatus","Pr
 const TALKS={5:{min:5,max:7},10:{min:8,max:12},15:{min:12,max:16},20:{min:15,max:20}};
 function slidesSchema(T){
   const item={type:"object",properties:{
-    icon:iconField("A sketch from the library, or an empty string for none. In 'flow', an empty icon shows the step number."),
+    icon:iconField("An illustration from the library, or an empty string for none. In 'flow', an empty icon shows the step number."),
     label:{type:"string",description:"Short on-slide label, 1 to 5 words."},
     detail:{type:"string",description:"Optional second line, under 12 words, or an empty string."},
     value:{type:["number","null"],description:"For 'bars', 'line' and 'donut' only: the figure from the paper. Otherwise null."},
@@ -1988,7 +2029,7 @@ function buildSlidesPrompt(){
   const mins=+$("talk").value, T=TALKS[mins], words=mins*130, we=$("isAuthor").checked;
   return `Please write a conference presentation for my MyPhD Studio app, following these instructions exactly.
 
-You are preparing a ${mins}-minute conference talk about the paper below. MyPhD Studio draws every slide from fixed hand-drawn layouts, so you only supply the slide content and the speaker notes, as JSON matching the schema below. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
+You are preparing a ${mins}-minute conference talk about the paper below. MyPhD Studio draws every slide from fixed illustrated layouts, so you only supply the slide content and the speaker notes, as JSON matching the schema below. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
 
 ${accuracyRules("Give the study's limitations their own slide.")}
 
@@ -2020,8 +2061,8 @@ Audience: ${AUDIENCES[$("audience").value]} This is a conference audience, so ke
 
 Layouts:
 - "title": the talk title, authors and year.
-- "statement": one sketch on the left and one sentence in "note". For the problem, the question, a key message or the closing.
-- "icons": 2 to 4 sketches side by side with labels, for participants, measures or variables.
+- "statement": one illustration on the left and one sentence in "note". For the problem, the question, a key message or the closing.
+- "icons": 2 to 4 illustrations side by side with labels, for participants, measures or variables.
 - "flow": 2 to 4 steps joined by arrows, for the procedure or a model such as predictor, mediator and outcome.
 - "compare": two panels side by side, for two groups, two conditions or before and after.
 - "list": 2 to 4 short points with tick marks.
@@ -2059,7 +2100,7 @@ function drawSlide(d,i){
   (RENDER[sl.layout]||RENDER.statement)(b,sl);
   const left=(i===0&&$("presenter").value.trim())?"Presented by "+$("presenter").value.trim():(d.authors||catLabel(d));
   if(left) b.text(left,26,528,{size:17,maxW:700,maxLines:1,color:MUTED});
-  b.text((i+1)+" / "+d.slides.length,934,528,{size:17,anchor:"end",color:MUTED});
+  b.text(pageTag(i,d.slides.length),934,528,{size:17,anchor:"end",color:MUTED});
   const svg=sketchSvg(960,540,"Slide "+(i+1)+": "+(sl.heading||sl.layout)); svg.append(b.g);
   return svg;
 }
@@ -2154,7 +2195,7 @@ function buildCarPrompt(){
   const N=+$("carN").value;
   return `Please write an Instagram carousel for my MyPhD Studio app, following these instructions exactly.
 
-You are writing a ${N}-slide Instagram carousel that explains the paper below to people scrolling their feed. MyPhD Studio draws every slide from fixed hand-drawn layouts, so you only supply the content, as JSON matching the schema below. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
+You are writing a ${N}-slide Instagram carousel that explains the paper below to people scrolling their feed. MyPhD Studio draws every slide from fixed illustrated layouts, so you only supply the content, as JSON matching the schema below. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
 
 ${accuracyRules("Mention the study's main limitation on one slide.")}
 
@@ -2170,8 +2211,8 @@ Writing:
 - Write as a friendly expert, not as an advert. No emoji, and at most one exclamation mark in the whole carousel.
 
 Layouts:
-- "hook": a sketch, a big heading and an optional short line.
-- "point": a heading, a sketch and a short explanation.
+- "hook": an illustration, a big heading and an optional short line.
+- "point": a heading, an illustration and a short explanation.
 - "list": a heading and 2 to 4 points with tick marks.
 - "stat": one big figure from the paper in "highlight", with what it means in "heading" and "body".
 - "compare": two panels, for two groups, two conditions or before and after.
@@ -2208,10 +2249,10 @@ const CAR={
   hook(b,c){
     const ic=hasIcon(c.icon)?c.icon:"question";
     b.icon(ic,CW/2-130,170,260,TEAL);
-    const hl=wrap(c.heading,92,900).slice(0,4), y0=640;
-    b.text(c.heading,CW/2,y0,{size:92,maxW:900,maxLines:4,anchor:"middle"});
-    const uy=y0+(hl.length-1)*106+34, w=Math.min(800,textW(hl[hl.length-1],92));
-    b.stroke("M"+(CW/2-w/2)+" "+uy+"C"+(CW/2-w/6)+" "+(uy-14)+" "+(CW/2+w/6)+" "+(uy+14)+" "+(CW/2+w/2)+" "+uy,{color:CORAL,w:7});
+    const hl=wrap(c.heading,92,900,"head").slice(0,4), y0=640;
+    b.text(c.heading,CW/2,y0,{size:92,maxW:900,maxLines:4,anchor:"middle",role:"head"});
+    const uy=y0+(hl.length-1)*106+34, w=Math.min(800,textW(hl[hl.length-1],92,"head"));
+    b.rule(CW/2-w/2,CW/2+w/2,uy,92);
     if(c.body) b.text(c.body,CW/2,uy+90,{size:42,maxW:860,maxLines:3,anchor:"middle",color:MUTED});
   },
   point(b,c){
@@ -2232,7 +2273,7 @@ const CAR={
   stat(b,c){
     const y=carTop(b,c), txt=c.highlight, size=txt.length>4?170:240, cy=Math.max(y+230,560);
     const rx=Math.min(470,Math.max(230,textW(txt,size)/2+90)), ry=size*0.7;
-    b.text(txt,CW/2,cy+size*0.34,{size,anchor:"middle",color:TEAL});
+    b.text(txt,CW/2,cy+size*0.34,{size,anchor:"middle",color:TEAL,role:"head"});
     b.stroke(ovalPath(CW/2,cy,rx,ry),{color:CORAL,w:7});
     if(c.body) b.text(c.body,CW/2,cy+ry+100,{size:46,maxW:900,maxLines:5,anchor:"middle"});
   },
@@ -2268,9 +2309,9 @@ const CAR={
   },
   cta(b,c){
     b.icon(hasIcon(c.icon)?c.icon:"lightbulb",CW/2-110,160,220,TEAL);
-    const hl=wrap(c.heading,82,900).slice(0,4), y0=560;
-    hl.forEach((ln,i)=>{ const w=textW(ln,82)+30, yy=y0+i*94; b.stroke("M"+(CW/2-w/2)+" "+(yy-18)+"H"+(CW/2+w/2),{color:MARK,w:46,opacity:.75}); });
-    b.text(c.heading,CW/2,y0,{size:82,maxW:900,maxLines:4,anchor:"middle"});
+    const hl=wrap(c.heading,82,900,"head").slice(0,4), y0=560;
+    hl.forEach((ln,i)=>{ const w=textW(ln,82,"head")+16, yy=y0+i*94; b.mark(CW/2-w/2,CW/2+w/2,yy,82); });
+    b.text(c.heading,CW/2,y0,{size:82,maxW:900,maxLines:4,anchor:"middle",role:"head"});
     if(c.body) b.text(c.body,CW/2,y0+hl.length*94+60,{size:44,maxW:880,maxLines:4,anchor:"middle"});
   }
 };
@@ -2280,7 +2321,7 @@ function drawCar(d,i){
   (CAR[c.layout]||CAR.point)(b,c);
   const handle=$("handle").value.trim();
   if(handle) b.text(handle.startsWith("@")?handle:"@"+handle,80,96,{size:34,color:MUTED});
-  b.text((i+1)+"/"+d.slides.length,1000,96,{size:34,anchor:"end",color:MUTED});
+  b.text(pageTag(i,d.slides.length,"/"),1000,96,{size:34,anchor:"end",color:MUTED});
   const srcLine=d.mode==="topic"?(catLabel(d)||d.source):d.source;
   if(srcLine) b.text(srcLine,80,1290,{size:26,maxW:i<d.slides.length-1?720:920,maxLines:1,color:MUTED});
   if(i<d.slides.length-1){
@@ -2336,9 +2377,9 @@ const SAMPLE_SLIDES={format:"slides",title:"Sharing research beyond the PDF",aut
   {layout:"statement",heading:"Good studies often go unread",note:"A dense PDF asks a lot from a busy reader.",highlight:"",items:[{icon:"document",label:"",detail:"",value:null,display:""}],
    notes:"Most of us know the feeling. We spend a year on a study, and it reaches a small circle of readers. The problem is rarely the research itself. A dense PDF simply asks a lot from a busy person. So the question is how to lower that cost without losing accuracy."},
   {layout:"flow",heading:"Three steps turn a paper into slides",note:"",highlight:"",items:[{icon:"document",label:"Add the PDF",detail:"",value:null,display:""},{icon:"chat",label:"Ask Claude",detail:"",value:null,display:""},{icon:"pencil",label:"Paste the reply",detail:"",value:null,display:""}],
-   notes:"The workflow has three steps. You add the PDF, which never leaves your browser. You copy a prompt into a Claude chat. Then you paste the reply back, and the page draws every slide in this hand-drawn style. Which raises a fair question: who decides what goes on each slide?"},
-  {layout:"compare",heading:"Claude writes, the page draws",note:"",highlight:"",items:[{icon:"robot",label:"Claude",detail:"Writes headings, notes and chooses a layout",value:null,display:""},{icon:"pencil",label:"MyPhD Studio",detail:"Draws each slide from a fixed sketch kit",value:null,display:""}],
-   notes:"Claude reads the paper and writes the headings, the speaker notes and the choice of layout. The page then draws each slide from a fixed kit of eight sketch layouts. That split matters, because the drawing can never add a number that Claude did not take from the paper."},
+   notes:"The workflow has three steps. You add the PDF, which never leaves your browser. You copy a prompt into a Claude chat. Then you paste the reply back, and the page draws every slide in this illustrated style. Which raises a fair question: who decides what goes on each slide?"},
+  {layout:"compare",heading:"Claude writes, the page draws",note:"",highlight:"",items:[{icon:"robot",label:"Claude",detail:"Writes headings, notes and chooses a layout",value:null,display:""},{icon:"pencil",label:"MyPhD Studio",detail:"Draws each slide from a fixed illustration kit",value:null,display:""}],
+   notes:"Claude reads the paper and writes the headings, the speaker notes and the choice of layout. The page then draws each slide from a fixed kit of eight illustrated layouts. That split matters, because the drawing can never add a number that Claude did not take from the paper."},
   {layout:"list",heading:"The prompt keeps it close to the paper",note:"",highlight:"",items:[{icon:"check",label:"Only numbers from the paper",detail:"",value:null,display:""},{icon:"check",label:"Authors' level of certainty",detail:"",value:null,display:""},{icon:"check",label:"Limitations get their own slide",detail:"",value:null,display:""}],
    notes:"Three rules keep the talk honest. Every number must come from the paper. Results keep the authors' own level of certainty, so a correlation is never presented as a cause. And the limitations always get their own slide. Anything Claude was unsure about is listed below the slides for you to check."},
   {layout:"statement",heading:"Thank you",note:"Questions are very welcome.",highlight:"",items:[{icon:"question",label:"",detail:"",value:null,display:""}],
@@ -2351,7 +2392,7 @@ const SAMPLE_CAR={format:"carousel",title:"Share your paper four ways",source:"E
     {layout:"point",heading:"Step 1: add your PDF",body:"Drop it into MyPhD Studio. The file stays in your own browser.",icon:"document",highlight:"",items:[]},
     {layout:"point",heading:"Step 2: let Claude write",body:"Copy the prompt into a Claude chat, then paste the reply back.",icon:"chat",highlight:"",items:[]},
     {layout:"list",heading:"Step 3: pick what to make",body:"",icon:"",highlight:"",items:[{icon:"",label:"A narrated explainer video",detail:"",value:null,display:""},{icon:"",label:"A one-page infographic",detail:"",value:null,display:""},{icon:"",label:"Conference slides with notes",detail:"",value:null,display:""},{icon:"",label:"An Instagram carousel",detail:"",value:null,display:""}]},
-    {layout:"stat",heading:"formats from one paper",body:"Each one hand-drawn, and each one kept close to what the paper says.",icon:"",highlight:"4",items:[]},
+    {layout:"stat",heading:"formats from one paper",body:"Each one illustrated, and each one kept close to what the paper says.",icon:"",highlight:"4",items:[]},
     {layout:"cta",heading:"Try it with your next paper",body:"Save this post for the day your paper comes out.",icon:"lightbulb",highlight:"",items:[]}]};
 
 /* =========================== Picker and steps =========================== */
@@ -2480,7 +2521,7 @@ $("loadSample").addEventListener("click",()=>{
 });
 
 /* ---------- Style bar ---------- */
-let THEME_KEY="highlighter";
+let THEME_KEY=THEME_DEFAULT;
 function redrawAll(){
   if(P.story && !P.playing) showStill(P.idx);
   if(DATA.info) $("infoView").replaceChildren(drawInfographic(DATA.info));
@@ -2488,13 +2529,13 @@ function redrawAll(){
   if(DATA.carousel) showCar(CI);
 }
 function setTheme(k,skipSave){
-  if(!THEMES[k]) k="highlighter";
+  if(!THEMES[k]) k=THEME_DEFAULT;
   THEME_KEY=k; applyTheme(k);
   $("styleBar").querySelectorAll("button").forEach(bt=>bt.setAttribute("aria-checked",bt.dataset.theme===k?"true":"false"));
   if(!skipSave){ try{ localStorage.setItem("myphd.theme",k); }catch(e){} }
-  redrawAll();
+  redrawAll(); refreshPrompt();
   /* draw again once the style's font has arrived, so text wraps to its real width */
-  if(document.fonts&&document.fonts.load) document.fonts.load("40px \""+THEME.font+"\"").then(()=>{ if(THEME_KEY===k) redrawAll(); }).catch(()=>{});
+  if(document.fonts&&document.fonts.load) Promise.all(["head","body","note"].map(r=>document.fonts.load(weightOf(r)+" 40px \""+famOf(r)+"\""))).then(()=>{ if(THEME_KEY===k) redrawAll(); }).catch(()=>{});
 }
 Object.entries(THEMES).forEach(([k,t])=>{
   const bt=document.createElement("button"); bt.type="button"; bt.setAttribute("role","radio"); bt.dataset.theme=k;
@@ -2509,7 +2550,8 @@ $("styleBar").addEventListener("keydown",ev=>{
   if(ev.key==="ArrowRight"||ev.key==="ArrowDown"){ ev.preventDefault(); setTheme(ks[(i+1)%ks.length]); $("styleBar").querySelector('[data-theme="'+THEME_KEY+'"]').focus(); }
   if(ev.key==="ArrowLeft"||ev.key==="ArrowUp"){ ev.preventDefault(); setTheme(ks[(i+ks.length-1)%ks.length]); $("styleBar").querySelector('[data-theme="'+THEME_KEY+'"]').focus(); }
 });
-let startTheme="highlighter"; try{ startTheme=localStorage.getItem("myphd.theme")||"highlighter"; }catch(e){}
+let startTheme=THEME_DEFAULT; try{ startTheme=localStorage.getItem("myphd.theme")||THEME_DEFAULT; }catch(e){}
+if(!THEMES[startTheme]) startTheme=THEME_DEFAULT;
 applyTheme(startTheme);
 
 /* ---------- Start ---------- */
