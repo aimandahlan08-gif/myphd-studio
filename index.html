@@ -237,7 +237,7 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
             <input type="range" id="rate" min="0.7" max="1.3" step="0.05" value="1"></div>
         </div>
         <label class="check" id="livelyField"><input type="checkbox" id="lively" checked> <span>Lively delivery: pace, pitch and pauses follow the mood of each scene</span></label>
-        <p class="hint" id="studioHint">The studio voice runs on your own computer. The first time, it downloads a voice model of about 90 MB, then it loads from your browser's storage.</p>
+        <p class="hint" id="studioHint">The studio voice runs on your own computer, using its graphics chip when the browser allows it. The first time, it downloads a voice model of about 310 MB (or 90 MB without a usable graphics chip). After that it loads from your browser's storage.</p>
         <progress id="voiceProg" value="0" max="1" hidden aria-label="Studio voice download"></progress>
         <div id="fileField" hidden class="stack">
           <p class="hint">Copy the script, generate one recording of it in VoiceStudio or any voice app, then load the audio file. Scenes follow the recording in proportion to their word counts.</p>
@@ -521,18 +521,31 @@ async function gen(m){
   for(const p of parts){ out.set(p.audio,o); o+=p.audio.length+Math.round(sr*p.pause); }
   self.postMessage({type:"done",key:m.key,audio:out,sr},[out.buffer]);
 }
+const progress=p=>self.postMessage({type:"progress",p:{status:p.status,file:p.file,loaded:p.loaded,total:p.total}});
+async function hasGpu(){ try{ return !!(self.navigator.gpu && await self.navigator.gpu.requestAdapter()); }catch(e){ return false; } }
+async function load(){
+  const id="onnx-community/Kokoro-82M-v1.0-ONNX";
+  if(await hasGpu()){
+    try{
+      self.postMessage({type:"device",device:"gpu"});
+      tts=await KokoroTTS.from_pretrained(id,{dtype:"fp32",device:"webgpu",progress_callback:progress});
+    }catch(e){ tts=null; }
+  }
+  if(!tts){
+    self.postMessage({type:"device",device:"cpu"});
+    tts=await KokoroTTS.from_pretrained(id,{dtype:"q8",device:"wasm",progress_callback:progress});
+  }
+  self.postMessage({type:"warming"});
+  await tts.generate("Hello there.",{voice:"af_heart"});
+  self.postMessage({type:"ready"});
+}
 self.onmessage=(e)=>{
   const m=e.data;
-  if(m.type==="load"){
-    KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX",{dtype:"q8",device:"wasm",
-      progress_callback:p=>self.postMessage({type:"progress",p:{status:p.status,file:p.file,loaded:p.loaded,total:p.total}})})
-      .then(t=>{ tts=t; self.postMessage({type:"ready"}); })
-      .catch(err=>self.postMessage({type:"error",message:String(err&&err.message||err)}));
-  } else if(m.type==="gen"){
+  if(m.type==="load"){ load().catch(err=>self.postMessage({type:"error",message:String(err&&err.message||err)})); } else if(m.type==="gen"){
     chain=chain.then(()=>gen(m)).catch(err=>self.postMessage({type:"genError",key:m.key,message:String(err&&err.message||err)}));
   }
 };`;
-const ST={worker:null,status:"off",cache:new Map(),busy:null,files:{}};
+const ST={worker:null,status:"off",cache:new Map(),busy:null,files:{},device:null};
 let actx=null, src=null;
 function studioKey(i){ const sc=P.story.scenes[i]; return [$("studioVoice").value,$("rate").value,$("lively").checked?1:0,sc.mood,sc.narration].join("|"); }
 function studioSentences(i){
@@ -554,14 +567,16 @@ function studioStart(){
 }
 function onStudioMsg(e){
   const m=e.data;
-  if(m.type==="progress"){
+  if(m.type==="device"){ ST.device=m.device; ST.files={}; }
+  else if(m.type==="warming"){ $("voiceProg").hidden=true; setStatus("voiceStatus","Warming up the studio voice"+(ST.device==="gpu"?" on your graphics chip":"")+". The first time can take about a minute."); }
+  else if(m.type==="progress"){
     const p=m.p;
     if(p.file && p.total){ ST.files[p.file]={l:p.loaded||0,t:p.total}; }
     let l=0,t=0; for(const k in ST.files){ l+=ST.files[k].l; t+=ST.files[k].t; }
     if(t>0){ $("voiceProg").value=l/t; setStatus("voiceStatus","Downloading the studio voice: "+Math.round(l/1048576)+" of "+Math.round(t/1048576)+" MB"); }
   } else if(m.type==="ready"){
     ST.status="ready"; $("voiceProg").hidden=true;
-    setStatus("voiceStatus","Studio voice ready.","ok");
+    setStatus("voiceStatus","Studio voice ready"+(ST.device==="gpu"?", running on your graphics chip.":". It is running on the processor, so each scene takes a little while to prepare."),"ok");
     if(P.waiting) setStatus("playStatus","Preparing the voice for this scene…");
     pumpStudio();
   } else if(m.type==="done"){
@@ -990,6 +1005,7 @@ $("make").addEventListener("click",()=>{
   try{
     const story=normalise(extractJSON($("reply").value));
     loadStory(story);
+    if($("mode").value==="studio" && $("lang").value!=="ms") studioStart();
     try{ localStorage.setItem("myphd.story",JSON.stringify(story)); }catch(e){}
     setStatus("replyStatus","Your video has "+story.scenes.length+" scenes. Press Play.","ok");
     $("stagebox").scrollIntoView({behavior:"smooth",block:"center"});
