@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MyPhD Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=Patrick+Hand&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=Patrick+Hand&family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
 <style>
 /* Layout idea: a workbench. Three numbered steps on the left, the sketchbook stage on the right; one column on narrow screens. Single light theme by choice: the stage is paper. */
 :root{
@@ -24,6 +24,7 @@
   --display:"Bricolage Grotesque","Trebuchet MS",sans-serif;
   --body:"Figtree","Segoe UI",system-ui,sans-serif;
   --hand:"Patrick Hand","Segoe Print","Bradley Hand","Comic Sans MS",cursive;
+  --sketch:var(--hand);
 }
 *{box-sizing:border-box}
 html,body{margin:0}
@@ -72,7 +73,7 @@ ol.how{margin:0;padding-left:20px;font-size:14px;color:var(--muted);display:flex
 /* Player */
 .stagebox{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .stagebox:fullscreen{display:grid;place-items:center;border-radius:0}
-svg#stage{display:block;width:100%;height:auto;aspect-ratio:16/9;font-family:var(--hand)}
+svg#stage{display:block;width:100%;height:auto;aspect-ratio:16/9;font-family:var(--sketch)}
 .tag{position:absolute;top:10px;right:10px;background:var(--marker);color:var(--ink);font-size:12px;font-weight:700;padding:3px 9px;border-radius:99px}
 .tag[hidden]{display:none}
 .caption{min-height:4.5em;margin:0;font-size:17px;line-height:1.5;padding:10px 12px;background:#f1f4f9;border-radius:10px}
@@ -92,7 +93,14 @@ progress{width:100%;height:8px;accent-color:var(--teal)}
 .picker button b{font-family:var(--display);font-weight:600;font-size:17px;line-height:1.2}
 .picker button span{font-weight:500;font-size:13px;color:var(--muted)}
 .picker button[aria-checked=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:#fff6cf}
-svg.sketch{display:block;width:100%;height:auto;font-family:var(--hand)}
+svg.sketch{display:block;width:100%;height:auto;font-family:var(--sketch)}
+.stylebar{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 16px}
+.stylebar>span{font-weight:600;font-size:14px;margin-right:4px}
+.stylebar button{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-color:var(--line);font-weight:500;font-size:14px;border-radius:99px}
+.stylebar button[aria-checked=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:#fff6cf}
+.sw{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1px solid rgba(0,0,0,.15);position:relative;overflow:hidden}
+.sw i{position:absolute;width:10px;height:10px;border-radius:50%}
+.sw i:nth-child(1){left:4px;top:9px}.sw i:nth-child(2){right:4px;top:9px}
 .posterbox,.cbox{position:relative;background:var(--paper);border:1px solid var(--line);border-radius:12px;overflow:hidden}
 .cbox{max-width:440px;width:100%;margin:0 auto}
 .cbox .tag{right:auto;left:50%;transform:translateX(-50%)}
@@ -128,9 +136,10 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
       <feTurbulence type="fractalNoise" baseFrequency="0.03" numOctaves="2" seed="2" result="n"/>
       <feDisplacementMap in="SourceGraphic" in2="n" scale="5" xChannelSelector="R" yChannelSelector="G"/>
     </filter>
-    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.1" fill="#d9d6c8"/></pattern>
-    <pattern id="hatchT" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><line x1="0" y1="0" x2="0" y2="9" stroke="#0c8a80" stroke-width="3.2"/></pattern>
-    <pattern id="hatchC" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-40)"><line x1="0" y1="0" x2="0" y2="9" stroke="#e4533b" stroke-width="3.2"/></pattern>
+    <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse"><circle id="dotC" cx="2" cy="2" r="1.1" fill="#d9d6c8"/></pattern>
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse"><path id="gridP" d="M40 0H0V40" fill="none" stroke="#2f5f9c" stroke-width="1.2"/></pattern>
+    <pattern id="hatchT" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(40)"><line id="hatchTL" x1="0" y1="0" x2="0" y2="9" stroke="#0c8a80" stroke-width="3.2"/></pattern>
+    <pattern id="hatchC" width="9" height="9" patternUnits="userSpaceOnUse" patternTransform="rotate(-40)"><line id="hatchCL" x1="0" y1="0" x2="0" y2="9" stroke="#e4533b" stroke-width="3.2"/></pattern>
   </defs>
 </svg>
 <div class="wrap">
@@ -238,12 +247,13 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
 
     <!-- Output -->
     <div class="stack">
+    <section class="card stylebar" role="radiogroup" aria-label="Style for every format" id="styleBar"><span>Style</span></section>
     <div class="stack" id="outVideo">
       <section class="card" aria-label="Video player">
         <div class="stagebox" id="stagebox">
           <svg id="stage" viewBox="0 0 960 540" role="img" aria-label="Hand-drawn explainer scene">
-            <rect width="960" height="540" fill="#f8f7f1"/>
-            <rect width="960" height="540" fill="url(#dots)"/>
+            <rect id="stageBg" width="960" height="540" fill="#f8f7f1"/>
+            <rect id="stagePat" width="960" height="540" fill="url(#dots)"/>
             <g id="scene"></g>
           </svg>
           <span class="tag" id="exampleTag">Example</span>
@@ -419,7 +429,29 @@ const ICONS = {
 };
 const ICON_NAMES = Object.keys(ICONS);
 const LAYOUTS = ["title","statement","icons","flow","compare","list","bars","number"];
-const INK="#1c2740", TEAL="#0c8a80", CORAL="#e4533b", MARK="#ffd94d", MUTED="#586480";
+let INK="#1c2740", TEAL="#0c8a80", CORAL="#e4533b", MARK="#ffd94d", MUTED="#586480";
+/* ---------- Styles: one look shared by the video, infographic, slides and carousel ---------- */
+const THEMES={
+  notebook:  {label:"Notebook",  bg:"#f8f7f1",pat:"dots",patC:"#d9d6c8",ink:"#1c2740",a1:"#0c8a80",a2:"#e4533b",mark:"#ffd94d",muted:"#586480",font:"Patrick Hand",rough:true},
+  chalk:     {label:"Chalkboard",bg:"#24372e",pat:"dots",patC:"#30483c",ink:"#f3f1ea",a1:"#8fd6c4",a2:"#f4a28c",mark:"#46664f",muted:"#b8c7bd",font:"Kalam",rough:true},
+  blueprint: {label:"Blueprint", bg:"#1d4b87",pat:"grid",patC:"#2c5c98",ink:"#f5f9ff",a1:"#9fd3ff",a2:"#ffcf5c",mark:"#2f6cb3",muted:"#c4d6ee",font:"Architects Daughter",rough:true},
+  riso:      {label:"Risograph", bg:"#fbeff2",pat:"dots",patC:"#efcfda",ink:"#262a6b",a1:"#14998b",a2:"#ff4f7b",mark:"#ffe45c",muted:"#5b5e8f",font:"Kalam",rough:true},
+  clean:     {label:"Clean",     bg:"#ffffff",pat:"none",patC:"#ffffff",ink:"#14213d",a1:"#0f6e8c",a2:"#d9480f",mark:"#fde68a",muted:"#5c6475",font:"Figtree",rough:false}
+};
+let THEME=THEMES.notebook;
+const fontStack=()=>'"'+THEME.font+'","Segoe Print","Comic Sans MS",cursive';
+function applyTheme(k){
+  THEME=THEMES[k]||THEMES.notebook;
+  INK=THEME.ink; TEAL=THEME.a1; CORAL=THEME.a2; MARK=THEME.mark; MUTED=THEME.muted;
+  document.documentElement.style.setProperty("--sketch",fontStack());
+  $("dotC").setAttribute("fill",THEME.patC); $("gridP").setAttribute("stroke",THEME.patC);
+  $("hatchTL").setAttribute("stroke",THEME.a1); $("hatchCL").setAttribute("stroke",THEME.a2);
+  $("stageBg").setAttribute("fill",THEME.bg); $("stagePat").setAttribute("fill",patFill());
+}
+const patFill=()=>THEME.pat==="none"?"none":"url(#"+THEME.pat+")";
+/* Measure text in the style's own font, so wrapping fits whichever font is chosen */
+const mctx=document.createElement("canvas").getContext("2d");
+function measure(str,size){ mctx.font=size+"px "+fontStack(); return mctx.measureText(String(str||"")).width; }
 
 function S(name, attrs, text){
   const e=document.createElementNS(NS,name);
@@ -428,16 +460,15 @@ function S(name, attrs, text){
   return e;
 }
 function wrap(str, size, maxW){
-  const maxChars=Math.max(6, Math.floor(maxW/(size*0.45)));
   const words=String(str||"").trim().split(/\s+/).filter(Boolean), lines=[]; let cur="";
   for(const w of words){
-    if(cur && (cur+" "+w).length>maxChars){ lines.push(cur); cur=w; } else cur=cur?cur+" "+w:w;
+    if(cur && measure(cur+" "+w,size)>maxW){ lines.push(cur); cur=w; } else cur=cur?cur+" "+w:w;
   }
   if(cur) lines.push(cur);
   return lines;
 }
 function Board(still){
-  const g=S("g"), shapes=S("g",{filter:still?"url(#roughStill)":"url(#rough)"}), texts=S("g");
+  const g=S("g"), shapes=S("g",THEME.rough?{filter:still?"url(#roughStill)":"url(#rough)"}:{}), texts=S("g");
   g.append(shapes,texts);
   let t=0.15;
   const b={
@@ -475,7 +506,7 @@ function Board(still){
 function heading(b,sc){
   if(!sc.heading) return 60;
   const lines=wrap(sc.heading,46,840).slice(0,2);
-  const w=Math.min(840, Math.max(...lines.map(l=>l.length))*46*0.45+20);
+  const w=Math.min(840, Math.max(...lines.map(l=>measure(l,46)))+20);
   b.stroke("M56 "+(88+(lines.length-1)*53)+"H"+(56+w),{color:MARK,w:26,opacity:.75,dur:.5,step:.2});
   const h=b.text(sc.heading,60,100,{size:46,maxW:840,maxLines:2,step:.45});
   return 100+h-20;
@@ -1200,14 +1231,14 @@ function showCautions(list){
 /* ---------- Drawing helpers shared by the still outputs ---------- */
 function sketchSvg(w,h,label){
   const svg=S("svg",{viewBox:"0 0 "+w+" "+h,width:w,height:h,class:"sketch",role:"img","aria-label":label||"Hand-drawn graphic"});
-  svg.append(S("rect",{width:w,height:h,fill:"#f8f7f1"}),S("rect",{width:w,height:h,fill:"url(#dots)"}));
+  svg.append(S("rect",{width:w,height:h,fill:THEME.bg}),S("rect",{width:w,height:h,fill:patFill()}));
   return svg;
 }
 function boxPath(x,y,w,h,r){ r=r||18;
   return "M"+(x+r)+" "+y+"H"+(x+w-r)+"Q"+(x+w)+" "+y+" "+(x+w)+" "+(y+r)+"V"+(y+h-r)+"Q"+(x+w)+" "+(y+h)+" "+(x+w-r)+" "+(y+h)+"H"+(x+r)+"Q"+x+" "+(y+h)+" "+x+" "+(y+h-r)+"V"+(y+r)+"Q"+x+" "+y+" "+(x+r)+" "+y; }
 function ovalPath(cx,cy,rx,ry){ return "M"+(cx-rx)+" "+cy+"a"+rx+" "+ry+" 0 1 1 "+(2*rx)+" 0a"+rx+" "+ry+" 0 1 1 "+(-2*rx-10)+" -8"; }
 function lineCount(str,size,maxW,maxLines){ const n=wrap(str,size,maxW).length; return Math.max(1,maxLines?Math.min(n,maxLines):n); }
-function textW(str,size){ return String(str||"").length*size*0.45; }
+function textW(str,size){ return measure(str,size); }
 function markHead(b,txt,x,y,size,maxW){         /* heading with a marker-pen highlight behind its first line */
   const first=wrap(txt,size,maxW)[0]||"";
   b.stroke("M"+(x-4)+" "+(y-size*0.25)+"H"+(x+Math.min(maxW,textW(first,size)+16)),{color:MARK,w:size*0.55,opacity:.75});
@@ -1227,31 +1258,32 @@ function loadLib(k){
   return loaded[k];
 }
 const blobToDataURL=b=>new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(b); });
-let fontCss=null;
-function embeddedFont(){                      /* the hand-drawn font, inlined so exported images keep it */
-  if(!fontCss) fontCss=(async()=>{
+const fontCss={};
+function embeddedFont(){                      /* the style's font, inlined so exported images keep it */
+  const fam=THEME.font;
+  if(!fontCss[fam]) fontCss[fam]=(async()=>{
     try{
-      let css=await (await fetch("https://fonts.googleapis.com/css2?family=Patrick+Hand&display=block")).text();
+      let css=await (await fetch("https://fonts.googleapis.com/css2?family="+fam.replace(/ /g,"+")+(fam==="Figtree"?":wght@400;600":"")+"&display=block")).text();
       for(const u of [...new Set([...css.matchAll(/url\((https:[^)]+)\)/g)].map(m=>m[1]))]){
         css=css.split(u).join(await blobToDataURL(await (await fetch(u)).blob()));
       }
       return css;
     }catch(e){ return ""; }
   })();
-  return fontCss;
+  return fontCss[fam];
 }
 async function svgToPng(svg,scale,jpeg){
   const w=+svg.getAttribute("width"), h=+svg.getAttribute("height");
   const c=svg.cloneNode(true);
   c.setAttribute("xmlns",NS);
-  const st=S("style"); st.textContent=(await embeddedFont())+".ink{fill:none;stroke-linecap:round;stroke-linejoin:round}text{font-family:'Patrick Hand','Segoe Print','Comic Sans MS',cursive}";
+  const st=S("style"); st.textContent=(await embeddedFont())+".ink{fill:none;stroke-linecap:round;stroke-linejoin:round}text{font-family:"+fontStack()+"}";
   c.insertBefore(st,c.firstChild);
   c.insertBefore($("sharedDefs").querySelector("defs").cloneNode(true),c.firstChild);
   const img=new Image();
   await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>rej(new Error("the drawing could not be turned into an image")); img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(new XMLSerializer().serializeToString(c)); });
   await new Promise(r=>setTimeout(r,60));      /* let the embedded font settle */
   const cv=document.createElement("canvas"); cv.width=Math.round(w*scale); cv.height=Math.round(h*scale);
-  const ctx=cv.getContext("2d"); ctx.fillStyle="#f8f7f1"; ctx.fillRect(0,0,cv.width,cv.height); ctx.drawImage(img,0,0,cv.width,cv.height);
+  const ctx=cv.getContext("2d"); ctx.fillStyle=THEME.bg; ctx.fillRect(0,0,cv.width,cv.height); ctx.drawImage(img,0,0,cv.width,cv.height);
   return await new Promise((res,rej)=>cv.toBlob(b=>b?res(b):rej(new Error("the image could not be saved")),jpeg?"image/jpeg":"image/png",jpeg?0.9:undefined));
 }
 function download(blob,name){
@@ -1443,8 +1475,9 @@ function drawInfographic(d){
   const svg=sketchSvg(W,H,"Infographic: "+d.title); svg.append(b.g);
   return svg;
 }
+const IS_SAMPLE={};
 function showInfo(d,isSample){
-  DATA.info=d; $("infoTag").hidden=!isSample;
+  IS_SAMPLE.info=!!isSample; DATA.info=d; $("infoTag").hidden=!isSample;
   $("infoView").replaceChildren(drawInfographic(d));
   if(OUT==="info") showCautions(d.cautions);
 }
@@ -1570,7 +1603,7 @@ function showSlide(i){
   [...$("slideList").querySelectorAll("button")].forEach((bt,k)=>bt.setAttribute("aria-current",k===SI?"true":"false"));
 }
 function showSlides(d,isSample){
-  DATA.slides=d; $("slidesTag").hidden=!isSample;
+  IS_SAMPLE.slides=!!isSample; DATA.slides=d; $("slidesTag").hidden=!isSample;
   const list=$("slideList"); list.replaceChildren();
   d.slides.forEach((sl,i)=>{ const li=document.createElement("li"), bt=document.createElement("button"); bt.type="button";
     const n=document.createElement("i"); n.textContent=(i+1)+"."; const sp=document.createElement("span"); sp.textContent=sl.heading||sl.layout;
@@ -1786,7 +1819,7 @@ function showCar(i){
   $("cCount").textContent="Slide "+(CI+1)+" of "+d.slides.length;
 }
 function showCarousel(d,isSample){
-  DATA.carousel=d; $("carTag").hidden=!isSample;
+  IS_SAMPLE.carousel=!!isSample; DATA.carousel=d; $("carTag").hidden=!isSample;
   $("cCaption").value=d.caption+(d.hashtags.length?"\n\n"+d.hashtags.map(h=>"#"+h).join(" "):"");
   showCar(0);
   if(OUT==="carousel") showCautions(d.cautions);
@@ -1906,6 +1939,39 @@ $("loadSample").addEventListener("click",()=>{
   setStatus("replyStatus","Showing the example "+OUTS[OUT].name+".");
 });
 
+/* ---------- Style bar ---------- */
+let THEME_KEY="notebook";
+function redrawAll(){
+  if(P.story && !P.playing) showStill(P.idx);
+  if(DATA.info) $("infoView").replaceChildren(drawInfographic(DATA.info));
+  if(DATA.slides) showSlide(SI);
+  if(DATA.carousel) showCar(CI);
+}
+function setTheme(k,skipSave){
+  if(!THEMES[k]) k="notebook";
+  THEME_KEY=k; applyTheme(k);
+  $("styleBar").querySelectorAll("button").forEach(bt=>bt.setAttribute("aria-checked",bt.dataset.theme===k?"true":"false"));
+  if(!skipSave){ try{ localStorage.setItem("myphd.theme",k); }catch(e){} }
+  redrawAll();
+  /* draw again once the style's font has arrived, so text wraps to its real width */
+  if(document.fonts&&document.fonts.load) document.fonts.load("40px \""+THEME.font+"\"").then(()=>{ if(THEME_KEY===k) redrawAll(); }).catch(()=>{});
+}
+Object.entries(THEMES).forEach(([k,t])=>{
+  const bt=document.createElement("button"); bt.type="button"; bt.setAttribute("role","radio"); bt.dataset.theme=k;
+  const sw=document.createElement("span"); sw.className="sw"; sw.style.background=t.bg;
+  const i1=document.createElement("i"), i2=document.createElement("i"); i1.style.background=t.a1; i2.style.background=t.a2; sw.append(i1,i2);
+  bt.append(sw,document.createTextNode(t.label));
+  bt.addEventListener("click",()=>setTheme(k));
+  $("styleBar").append(bt);
+});
+$("styleBar").addEventListener("keydown",ev=>{
+  const ks=Object.keys(THEMES), i=ks.indexOf(THEME_KEY);
+  if(ev.key==="ArrowRight"||ev.key==="ArrowDown"){ ev.preventDefault(); setTheme(ks[(i+1)%ks.length]); $("styleBar").querySelector('[data-theme="'+THEME_KEY+'"]').focus(); }
+  if(ev.key==="ArrowLeft"||ev.key==="ArrowUp"){ ev.preventDefault(); setTheme(ks[(i+ks.length-1)%ks.length]); $("styleBar").querySelector('[data-theme="'+THEME_KEY+'"]').focus(); }
+});
+let startTheme="notebook"; try{ startTheme=localStorage.getItem("myphd.theme")||"notebook"; }catch(e){}
+applyTheme(startTheme);
+
 /* ---------- Start ---------- */
 function restore(k){ try{ const v=localStorage.getItem(OUTS[k].key); if(v) return NORM[k](JSON.parse(v)); }catch(e){} return null; }
 const savedVideo=restore("video");
@@ -1916,6 +1982,7 @@ const sCar=restore("carousel"); showCarousel(sCar||SAMPLE_CAR,!sCar);
 modeChanged();
 let startOut="video"; try{ startOut=localStorage.getItem("myphd.out")||"video"; }catch(e){}
 setOut(startOut,true);
+setTheme(startTheme,true);
 </script>
 </body>
 </html>
