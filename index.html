@@ -252,7 +252,7 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
               <option value="students" selected>Students</option>
               <option value="researchers">Researchers</option>
             </select></div>
-          <div class="field" id="lengthField"><label for="length">Length</label>
+          <div class="field" id="lengthField"><label for="length" id="lengthLabel">Length</label>
             <select id="length">
               <option value="short">Short (1 min)</option>
               <option value="standard" selected>Standard (2 min)</option>
@@ -267,7 +267,7 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
               <option value="15">15 minutes</option>
               <option value="20">20 minutes</option>
             </select></div>
-          <div class="field" id="carNField" hidden><label for="carN">Slides</label>
+          <div class="field" id="carNField" hidden><label for="carN" id="carNLabel">Slides</label>
             <select id="carN">
               <option value="6">6 slides</option>
               <option value="8" selected>8 slides</option>
@@ -292,6 +292,11 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
 
       <section class="card" aria-labelledby="s2">
         <div class="step-head"><span class="num">2</span><h2 id="s2">Copy the prompt into Claude</h2></div>
+        <div class="seg" role="radiogroup" aria-label="What the prompt asks for" id="scopeSeg">
+          <button type="button" role="radio" data-scope="all" aria-checked="true">All four formats</button>
+          <button type="button" role="radio" data-scope="one" aria-checked="false" id="scopeOne">Only the video</button>
+        </div>
+        <p class="hint" id="scopeHint"></p>
         <div class="row">
           <button class="primary" id="copyPrompt" type="button">Copy prompt for Claude</button>
         </div>
@@ -1427,7 +1432,15 @@ Build the video as a story told to a viewer, not as a textbook summary. Use thes
 - Last slide (layout "cta"): the takeaway in "heading", and in "body" an invitation to save or share the post.
 - Write exactly ${N} slides. Use at least four different layouts.`
 };
-function topicize(pr,kind){
+function topicSource(){
+  const field=$("field").value, persp=$("persp").value;
+  return `The topic and my notes:
+<topic>${$("topic").value.trim()}</topic>
+<field>${field||"Not given: choose the best fit and report it in \"category\""}</field>
+<perspective>${persp?persp+" perspective":"Not given: compare the main schools of thought"}</perspective>
+<notes>${$("topicNotes").value.trim().slice(0,MAX_CHARS)||"No notes provided."}</notes>`;
+}
+function topicize(pr,kind,only){
   const acc=`Accuracy comes first:
 - Teach mainstream, well-established psychology, at the level of a good textbook. Where researchers disagree, or a classic finding has not replicated well, say so plainly and add a note to "cautions".
 - Never invent statistics, study results, quotes, author names or publication years. Name a theorist or classic study only if it is well known and you are sure of the details; otherwise describe the idea without a name.
@@ -1438,18 +1451,16 @@ function topicize(pr,kind){
 - If the topic is not really a psychology topic, explain its closest psychological angle and say so in "cautions".
 
 `;
-  const field=$("field").value, persp=$("persp").value;
-  const src=`The topic and my notes:
-<topic>${$("topic").value.trim()}</topic>
-<field>${field||"Not given: choose the best fit and report it in \"category\""}</field>
-<perspective>${persp?persp+" perspective":"Not given: compare the main schools of thought"}</perspective>
-<notes>${$("topicNotes").value.trim().slice(0,MAX_CHARS)||"No notes provided."}</notes>`;
+  const src=topicSource();
+  if(only!=="words"){
   pr=pr.replace(/Accuracy comes first:[\s\S]*?\n\n/,()=>acc);
   if(kind==="video") pr=pr.replace(/Story:\n[\s\S]*?(?=This is a longer video|Write \d+ to \d+ scenes)/,()=>TOPIC_STRUCT.video());
   if(kind==="slides") pr=pr.replace(/Structure, in this order:\n[\s\S]*?(?=Write \d+ to \d+ slides)/,()=>TOPIC_STRUCT.slides());
   if(kind==="carousel") pr=pr.replace(/Structure:\n[\s\S]*?(?=\n\nWriting:)/,()=>TOPIC_STRUCT.carousel(+$("carN").value));
   pr=pr.replace(/The paper:\n<paper>[\s\S]*?<\/paper>(\n\(The paper text was cut[^\n]*)?/,()=>src);
   pr=pr.replace(/- The presenter is (not )?one of the authors[^\n]*\n/,"- Speak as a presenter teaching the topic to colleagues.\n");
+  }
+  if(only==="sections") return pr;
   const swaps=[
     ["turns a research paper into","turns a psychology topic into"],
     ["that the user should check against the paper","that the user should double-check"],
@@ -1481,11 +1492,69 @@ function topicize(pr,kind){
        .replace(/\bthe study\b/g,"the topic").replace(/\bthe authors\b/g,"researchers");
   return pr;
 }
+/* One prompt for all four formats, like MedTopic Studio: one reply fills the video, infographic, slides and carousel */
+let SCOPE="all";
+const ALL_KINDS=["video","info","slides","carousel"];
+const ALL_KEYS={video:"video",info:"infographic",slides:"slides",carousel:"carousel"};
+const ALL_NAMES={video:"Explainer video",info:"Infographic",slides:"Conference slides",carousel:"Instagram carousel"};
+function buildAllPrompt(){
+  const topic=SRC==="topic", aud="Audience: "+AUDIENCES[$("audience").value];
+  let accuracy="";
+  const sections=ALL_KINDS.map(k=>{
+    let pr=PROMPTS[k](); if(topic) pr=topicize(pr,k,"sections");
+    const a=pr.indexOf("Accuracy comes first:"), aEnd=pr.indexOf("\n\n",a);
+    if(k==="info") accuracy=pr.slice(a,aEnd);
+    const role=(pr.match(/You are[^.]*\./)||[""])[0];
+    let srcAt=pr.search(/\nThe paper:\n<paper>|\nThe topic and my notes:/); if(srcAt<0) srcAt=pr.indexOf("\nReply format:");
+    let body=pr.slice(aEnd+2,srcAt).trim();
+    body=k==="slides"?body.split(aud+" ").join(""):body.split("\n").filter(l=>l!==aud).join("\n").replace(/\n{3,}/g,"\n\n");
+    return `## ${ALL_NAMES[k]} (JSON key "${ALL_KEYS[k]}")
+${role}
+
+${body.trim()}`;
+  });
+  accuracy=accuracy.replace("- Always include the study's main limitation.","- Cover the study's main limitation in every format.")
+                   .replace("- Always include the main criticism or open question.","- Cover the main criticism or open question in every format.");
+  const L=LENGTHS[$("length").value], T=TALKS[+$("talk").value], N=+$("carN").value;
+  const metaSch=withMeta({type:"object",properties:{},required:[]});
+  const sch={mode:metaSch.properties.mode,category:metaSch.properties.category,
+    video:schema(L),infographic:infoSchema(),slides:slidesSchema(T),carousel:carSchema(N)};
+  let out=`Please write the content for my MyPhD Studio app, following these instructions exactly.
+
+You are the writer for MyPhD Studio, an app that turns ${topic?"a psychology topic":"a research paper"} into four hand-drawn formats: an explainer video, a one-page infographic, conference slides and an Instagram carousel. The app draws every format from fixed hand-drawn layouts, so you only supply the content, as JSON matching the schemas at the end. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
+
+${accuracy}
+
+${aud}
+
+Write all four formats. Each one stands on its own, so do not refer from one format to another.
+
+${sections.join("\n\n")}
+
+${topic?topicSource():paperBlock()}
+
+Reply format:
+Reply with ONE JSON object with exactly six keys: "mode", "category", "video", "infographic", "slides" and "carousel". "mode" and "category" describe the whole piece once. Each of the other four values must match its JSON Schema below. Write the formats in that order and keep each within its own limits, so the reply is not cut off. Put the whole object in a single \`\`\`json code block and write nothing before or after it.
+
+JSON Schemas, one per key (for reference only, do not repeat them in your reply):
+${JSON.stringify(sch)}`;
+  if(topic) out=topicize(out,"info","words");
+  return out;
+}
+function replyWords(){
+  const L=LENGTHS[$("length").value];
+  return L.total+(+$("talk").value)*130+700+(+$("carN").value)*35;
+}
 function refreshPrompt(){
   const has=hasSource();
   const p=has?buildPrompt():"";
   $("promptText").value=p;
   $("promptSummary").textContent=has?"See the prompt ("+p.length.toLocaleString()+" characters)":"See the prompt";
+  const w=replyWords();
+  $("scopeHint").textContent=SCOPE==="all"
+    ?(w>3600?"Claude's reply will be long, about "+w.toLocaleString()+" words, so it may stop partway. If it does, type \"continue\" in the chat and paste both parts here together. Shorter video and talk lengths keep it in one go."
+             :"One prompt, one reply: Claude writes all four formats together, about "+w.toLocaleString()+" words.")
+    :"Claude writes only the "+OUTS[OUT].name+". Switch to all four to make everything at once.";
   return p;
 }
 $("copyPrompt").addEventListener("click",()=>{
@@ -1497,7 +1566,7 @@ $("copyPrompt").addEventListener("click",()=>{
 function extractJSON(raw){
   let t=String(raw||"").trim();
   if(!t) throw new Error("Paste Claude's reply first.");
-  const f=t.match(/```(?:json)?\s*([\s\S]*?)```/i); if(f) t=f[1].trim();
+  t=t.replace(/\s*```(?:json)?\s*/gi,"").trim();   /* also joins a reply that Claude finished after "continue" */
   const a=t.indexOf("{"), z=t.lastIndexOf("}");
   if(a<0||z<=a) throw new Error("There is no JSON in that text. Copy Claude's whole reply, including the ```json block.");
   t=t.slice(a,z+1);
@@ -2234,17 +2303,29 @@ const SAMPLE_CAR={format:"carousel",title:"Share your paper four ways",source:"E
 
 /* =========================== Picker and steps =========================== */
 const PROMPTS={video:()=>buildVideoPrompt(),info:buildInfoPrompt,slides:buildSlidesPrompt,carousel:buildCarPrompt};
-function buildPrompt(){ const pr=PROMPTS[OUT](); return SRC==="topic"?topicize(pr,OUT):pr; }
+function buildPrompt(){
+  if(SCOPE==="all") return buildAllPrompt();
+  const pr=PROMPTS[OUT](); return SRC==="topic"?topicize(pr,OUT):pr;
+}
+function setScope(k,skipSave){
+  SCOPE=k==="one"?"one":"all";
+  $("scopeSeg").querySelectorAll("button").forEach(bt=>bt.setAttribute("aria-checked",bt.dataset.scope===SCOPE?"true":"false"));
+  if(!skipSave){ try{ localStorage.setItem("myphd.scope",SCOPE); }catch(e){} }
+  setOut(OUT,true);
+}
 function setOut(k,skipSave){
   if(!OUTS[k]) k="video";
   if(OUT==="video" && k!=="video" && P.playing) pause();
   OUT=k;
   document.querySelectorAll(".picker button").forEach(bt=>bt.setAttribute("aria-checked",bt.dataset.out===k?"true":"false"));
   $("outVideo").hidden=k!=="video"; $("outInfo").hidden=k!=="info"; $("outSlides").hidden=k!=="slides"; $("outCarousel").hidden=k!=="carousel";
-  $("lengthField").hidden=k!=="video"; $("talkField").hidden=k!=="slides"; $("carNField").hidden=k!=="carousel";
-  $("slidesOpts").hidden=k!=="slides"; $("carOpts").hidden=k!=="carousel";
-  $("langLabel").textContent=k==="video"?"Narration language":"Language";
-  $("make").textContent=OUTS[k].make;
+  const all=SCOPE==="all";
+  $("lengthField").hidden=!(all||k==="video"); $("talkField").hidden=!(all||k==="slides"); $("carNField").hidden=!(all||k==="carousel");
+  $("lengthLabel").textContent=all?"Video length":"Length"; $("carNLabel").textContent=all?"Carousel slides":"Slides";
+  $("slidesOpts").hidden=!(all||k==="slides"); $("carOpts").hidden=!(all||k==="carousel");
+  $("langLabel").textContent=(all||k==="video")?"Narration language":"Language";
+  $("make").textContent=all?"Make all four":OUTS[k].make;
+  $("scopeOne").textContent="Only the "+OUTS[k].name;
   const d=DATA[k];
   showCautions(d&&d.cautions); showCat(d);
   setStatus("replyStatus",""); setStatus("promptStatus","");
@@ -2257,7 +2338,8 @@ document.querySelector(".picker").addEventListener("keydown",ev=>{
   if(ev.key==="ArrowRight"||ev.key==="ArrowDown"){ ev.preventDefault(); setOut(ks[(i+1)%ks.length]); document.querySelector('.picker [data-out="'+OUT+'"]').focus(); }
   if(ev.key==="ArrowLeft"||ev.key==="ArrowUp"){ ev.preventDefault(); setOut(ks[(i+ks.length-1)%ks.length]); document.querySelector('.picker [data-out="'+OUT+'"]').focus(); }
 });
-["talk","carN","isAuthor"].forEach(id=>$(id).addEventListener("change",refreshPrompt));
+["talk","carN","isAuthor","length","audience","lang"].forEach(id=>$(id).addEventListener("change",refreshPrompt));
+$("scopeSeg").querySelectorAll("button").forEach(bt=>bt.addEventListener("click",()=>setScope(bt.dataset.scope)));
 
 function kindOf(o){
   if(o&&o.format==="infographic") return "info";
@@ -2292,9 +2374,29 @@ const SHOW={
   video:(d,s)=>{ DATA.video=d; loadStory(d); },
   info:showInfo, slides:showSlides, carousel:showCarousel
 };
+function makeAll(raw){
+  const made=[], failed=[];
+  ALL_KINDS.forEach(k=>{
+    const part=raw[ALL_KEYS[k]];
+    if(!part||typeof part!=="object"){ failed.push(OUTS[k].name); return; }
+    try{
+      const d=NORM[k](Object.assign({},part,{mode:raw.mode,category:raw.category}));
+      SHOW[k](d,false); save(k,d);
+      made.push(k==="video"?"video ("+d.scenes.length+" scenes)":k==="info"?"infographic":k==="slides"?"slides ("+d.slides.length+")":"carousel ("+d.slides.length+" slides)");
+    }catch(e){ failed.push(OUTS[k].name); }
+  });
+  if(!made.length) throw new Error("None of the four formats could be read. Make sure you pasted Claude's whole reply to the all-four prompt.");
+  setOut(OUT,true);
+  if(DATA.video && $("mode").value==="studio" && $("lang").value!=="ms") studioStart();
+  const list=made.length>1?made.slice(0,-1).join(", ")+" and "+made[made.length-1]:made[0];
+  setStatus("replyStatus","Made your "+list+". Switch between them with the buttons at the top."+(failed.length?" Missing: "+failed.join(", ")+". The reply was probably cut off, so ask Claude to \"continue\" and paste both parts together.":""),failed.length?"bad":"ok");
+  document.querySelector(".picker").scrollIntoView({behavior:"smooth",block:"start"});
+}
 $("make").addEventListener("click",()=>{
   try{
-    const raw=extractJSON($("reply").value), k=kindOf(raw), d=NORM[k](raw);
+    const raw0=extractJSON($("reply").value);
+    if(["video","infographic","slides","carousel"].filter(x=>raw0[x]&&typeof raw0[x]==="object"&&!Array.isArray(raw0[x])).length>=2){ makeAll(raw0); return; }
+    const raw=raw0, k=kindOf(raw), d=NORM[k](raw);
     if(k!==OUT) setOut(k);
     SHOW[k](d,false); save(k,d); showCautions(d.cautions); showCat(d);
     if(k==="video"){
@@ -2358,6 +2460,10 @@ const sCar=restore("carousel"); showCarousel(sCar||SAMPLE_CAR,!sCar);
 modeChanged();
 let startOut="video"; try{ startOut=localStorage.getItem("myphd.out")||"video"; }catch(e){}
 setOut(startOut,true);
+let startScope="all"; try{ startScope=localStorage.getItem("myphd.scope")||"all"; }catch(e){}
+SCOPE=startScope==="one"?"one":"all";
+$("scopeSeg").querySelectorAll("button").forEach(bt=>bt.setAttribute("aria-checked",bt.dataset.scope===SCOPE?"true":"false"));
+setOut(OUT,true);
 let startSrc="paper"; try{ startSrc=localStorage.getItem("myphd.src")||"paper"; }catch(e){}
 setSrc(startSrc,true);
 setTheme(startTheme,true);
