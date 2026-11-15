@@ -83,6 +83,9 @@ progress{width:100%;height:8px;accent-color:var(--teal)}
 .scenes button{width:100%;text-align:left;border-color:transparent;font-weight:500;padding:6px 10px;display:flex;gap:10px}
 .scenes button i{font-style:normal;color:var(--muted);font-variant-numeric:tabular-nums;flex:none;width:1.6em}
 .scenes button[aria-current=true]{background:#fff6cf;border-color:var(--marker)}
+.check{display:flex;gap:8px;align-items:flex-start;font-weight:500;font-size:14px}
+.check input{margin-top:3px;accent-color:var(--teal)}
+#voiceProg{height:6px}
 ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-direction:column;gap:4px}
 
 /* Drawing animation */
@@ -211,17 +214,34 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
         <div class="row">
           <div class="field"><label for="mode">Narration</label>
             <select id="mode">
+              <option value="studio" selected>Studio voice (natural, English)</option>
               <option value="browser">Browser voice</option>
               <option value="file">My audio file (for example from VoiceStudio)</option>
               <option value="none">Captions only</option>
+            </select></div>
+          <div class="field" id="studioField"><label for="studioVoice">Voice</label>
+            <select id="studioVoice">
+              <option value="af_heart">Heart (US, female)</option>
+              <option value="af_bella">Bella (US, female, bright)</option>
+              <option value="af_nicole">Nicole (US, female, soft)</option>
+              <option value="am_michael">Michael (US, male)</option>
+              <option value="am_puck">Puck (US, male, upbeat)</option>
+              <option value="am_fenrir">Fenrir (US, male, deep)</option>
+              <option value="bf_emma">Emma (UK, female)</option>
+              <option value="bm_george">George (UK, male)</option>
+              <option value="bm_fable">Fable (UK, male)</option>
             </select></div>
           <div class="field" id="voiceField"><label for="voice">Voice</label>
             <select id="voice"></select></div>
           <div class="field" id="rateField"><label for="rate">Speed <span id="rateVal">1.0</span>×</label>
             <input type="range" id="rate" min="0.7" max="1.3" step="0.05" value="1"></div>
         </div>
+        <label class="check" id="livelyField"><input type="checkbox" id="lively" checked> <span>Lively delivery: pace, pitch and pauses follow the mood of each scene</span></label>
+        <p class="hint" id="studioHint">The studio voice runs on your own computer. The first time, it downloads a voice model of about 90 MB, then it loads from your browser's storage.</p>
+        <progress id="voiceProg" value="0" max="1" hidden aria-label="Studio voice download"></progress>
         <div id="fileField" hidden class="stack">
           <p class="hint">Copy the script, generate one recording of it in VoiceStudio or any voice app, then load the audio file. Scenes follow the recording in proportion to their word counts.</p>
+          <label class="check"><input type="checkbox" id="emoTags" checked> <span>Start each line with an emotion tag such as [emotion:excited]. VoiceStudio's Audiobook and Stories tools use it with IndexTTS2, CosyVoice 3 and VoxCPM2. Untick it for other voice apps, which would read the tag aloud.</span></label>
           <div class="row">
             <button class="quiet" id="copyScript" type="button">Copy narration script</button>
             <label class="filebtn" for="audioFile">Choose audio file</label>
@@ -437,35 +457,170 @@ function drawScene(sc, animate){
 const SAMPLE = {
   title:"How MyPhD Studio works", authors:"Example video", isSample:true,
   scenes:[
-    {layout:"title",heading:"Your paper, as a hand-drawn explainer",note:"Example video. Replace it with your own paper.",highlight:"",items:[],
-     narration:"This is MyPhD Studio. It takes a research paper and turns it into a short explainer video, drawn by hand on screen while a voice reads the script."},
-    {layout:"statement",heading:"Good studies go unread",note:"A dense PDF asks a lot from a busy reader. A two minute sketch asks very little.",highlight:"",items:[{icon:"document",label:"",detail:""}],
-     narration:"Most papers reach only a handful of readers, because a dense PDF asks a lot from a busy person. A two minute sketch asks very little."},
-    {layout:"flow",heading:"Three steps and a play button",note:"",highlight:"",items:[{icon:"document",label:"Add your PDF",detail:""},{icon:"pencil",label:"Copy the prompt",detail:""},{icon:"chat",label:"Paste Claude's reply",detail:""},{icon:"happy",label:"Watch it draw",detail:""}],
+    {layout:"title",mood:"excited",heading:"Your paper, as a hand-drawn explainer",note:"Example video. Replace it with your own paper.",highlight:"",items:[],
+     narration:"Welcome to MyPhD Studio! Give it a research paper, and it turns the paper into a short explainer video. The sketches draw themselves while a voice tells the story."},
+    {layout:"statement",mood:"curious",heading:"Good studies go unread",note:"A dense PDF asks a lot from a busy reader. A two minute sketch asks very little.",highlight:"",items:[{icon:"document",label:"",detail:""}],
+     narration:"Here is an awkward truth. Most papers reach only a handful of readers. Why? A dense PDF asks a lot from a busy person. A two minute sketch asks very little."},
+    {layout:"flow",mood:"warm",heading:"Three steps and a play button",note:"",highlight:"",items:[{icon:"document",label:"Add your PDF",detail:""},{icon:"pencil",label:"Copy the prompt",detail:""},{icon:"chat",label:"Paste Claude's reply",detail:""},{icon:"happy",label:"Watch it draw",detail:""}],
      narration:"You add your PDF, copy the prompt into a Claude chat, and paste the reply back here. Then you press play and the video draws itself."},
-    {layout:"compare",heading:"Who does what",note:"",highlight:"",items:[{icon:"robot",label:"Claude",detail:"Writes the script and chooses a layout for every scene"},{icon:"pencil",label:"MyPhD Studio",detail:"Draws the sketches and reads the script aloud"}],
+    {layout:"compare",mood:"calm",heading:"Who does what",note:"",highlight:"",items:[{icon:"robot",label:"Claude",detail:"Writes the script and chooses a layout for every scene"},{icon:"pencil",label:"MyPhD Studio",detail:"Draws the sketches and reads the script aloud"}],
      narration:"Claude reads the paper, writes the script and chooses a layout for every scene. MyPhD Studio draws the sketches and reads the script aloud."},
-    {layout:"bars",heading:"Pick a length",note:"Most scenes each length setting allows",highlight:"",items:[{label:"Short",value:6,display:"6 scenes"},{label:"Standard",value:9,display:"9 scenes"},{label:"Deep dive",value:12,display:"12 scenes"}],
+    {layout:"bars",mood:"warm",heading:"Pick a length",note:"Most scenes each length setting allows",highlight:"",items:[{label:"Short",value:6,display:"6 scenes"},{label:"Standard",value:9,display:"9 scenes"},{label:"Deep dive",value:12,display:"12 scenes"}],
      narration:"You choose how long the video runs. A short video has up to six scenes, a standard one up to nine, and a deep dive up to twelve."},
-    {layout:"list",heading:"It stays close to the paper",note:"",highlight:"",items:[{label:"Only numbers that appear in the paper",detail:""},{label:"The main limitation gets its own scene",detail:""},{label:"Doubts are listed under the video",detail:""}],
+    {layout:"list",mood:"serious",heading:"It stays close to the paper",note:"",highlight:"",items:[{label:"Only numbers that appear in the paper",detail:""},{label:"The main limitation gets its own scene",detail:""},{label:"Doubts are listed under the video",detail:""}],
      narration:"The script may only use numbers that appear in the paper. The main limitation gets its own scene, and anything Claude was unsure about is listed under the video for you to check."},
-    {layout:"number",heading:"A small sketch kit",note:"layouts to draw with, from flow charts to bar charts",highlight:"8",items:[],
-     narration:"Every scene uses one of eight layouts, such as a flow chart, a comparison, a bar chart or one big number."},
-    {layout:"statement",heading:"Now try your own paper",note:"Add a PDF in step one. Your first draft is three steps away.",highlight:"",items:[{icon:"lightbulb",label:"",detail:""}],
-     narration:"That is the whole idea. Add your own paper in step one, and your first draft is three steps away."}
+    {layout:"number",mood:"surprised",heading:"A small sketch kit",note:"layouts to draw with, from flow charts to bar charts",highlight:"8",items:[],
+     narration:"And the whole sketch kit? Just eight layouts. A flow chart, a comparison, a bar chart, one big number, and a few more. That is all it takes."},
+    {layout:"statement",mood:"excited",heading:"Now try your own paper",note:"Add a PDF in step one. Your first draft is three steps away.",highlight:"",items:[{icon:"lightbulb",label:"",detail:""}],
+     narration:"That is the whole idea. Now it is your turn! Add your own paper in step one, and your first video is just three steps away."}
   ],
   cautions:[]
 };
 
 /* ---------- Player ---------- */
-const P = { story:null, idx:0, playing:false, elapsed:0, minMs:0, estMs:0, narrDone:false, sents:[], sentIdx:0, token:0, last:0, gap:0, starts:[], fellBack:false };
+const P = { story:null, idx:0, playing:false, elapsed:0, minMs:0, estMs:0, narrDone:false, sents:[], sentIdx:0, token:0, last:0, gap:0, starts:[], fellBack:false, waiting:false };
+/* How each mood shapes the delivery: speed for the studio voice, rate and pitch for the browser voice */
+const MOODS = {
+  excited:  {speed:1.08, rate:1.07, pitch:1.14},
+  surprised:{speed:1.05, rate:1.04, pitch:1.18},
+  curious:  {speed:1.02, rate:1.01, pitch:1.08},
+  warm:     {speed:1.00, rate:1.00, pitch:1.02},
+  calm:     {speed:0.95, rate:0.95, pitch:0.97},
+  serious:  {speed:0.92, rate:0.92, pitch:0.90}
+};
+const MOOD_NAMES = Object.keys(MOODS);
+const clamp=(v,a,b)=>Math.min(b,Math.max(a,v));
+function prosody(sc, si, n, text){
+  const base=Number($("rate").value);
+  if(!$("lively").checked) return {speed:base, rate:base, pitch:1, pause:0.3};
+  const md=MOODS[sc.mood]||MOODS.warm, q=/\?["')]*\s*$/.test(text), ex=/!["')]*\s*$/.test(text);
+  const j=(((si*37+text.length*11)%9)-4)/100;          /* small, repeatable variation between sentences */
+  const last=n>1 && si===n-1;
+  return {
+    speed: clamp(base*md.speed*(1+j)*(q?0.97:1)*(ex?1.05:1), 0.7, 1.45),
+    rate:  clamp(base*md.rate*(1+j)*(q?0.98:1)*(ex?1.05:1), 0.6, 1.6),
+    pitch: clamp(md.pitch*(1+j*1.6)*(q?1.12:1)*(ex?1.05:1)*(last?0.95:1), 0.6, 1.6),
+    pause: q?0.5:(ex?0.38:(last?0.2:0.3))
+  };
+}
+
+/* ---------- Studio voice: Kokoro-82M running in a background worker ---------- */
+const KOKORO_URL="https://cdn.jsdelivr.net/npm/kokoro-js@1.2.1/dist/kokoro.web.js";
+const WORKER_SRC=`
+import { KokoroTTS } from "${KOKORO_URL}";
+let tts=null, chain=Promise.resolve();
+async function gen(m){
+  const parts=[]; let sr=24000;
+  for(const s of m.sentences){
+    const a=await tts.generate(s.text,{voice:m.voice,speed:s.speed});
+    sr=a.sampling_rate; parts.push({audio:a.audio,pause:s.pause});
+  }
+  const lead=Math.round(sr*0.12); let len=lead;
+  for(const p of parts) len+=p.audio.length+Math.round(sr*p.pause);
+  const out=new Float32Array(len); let o=lead;
+  for(const p of parts){ out.set(p.audio,o); o+=p.audio.length+Math.round(sr*p.pause); }
+  self.postMessage({type:"done",key:m.key,audio:out,sr},[out.buffer]);
+}
+self.onmessage=(e)=>{
+  const m=e.data;
+  if(m.type==="load"){
+    KokoroTTS.from_pretrained("onnx-community/Kokoro-82M-v1.0-ONNX",{dtype:"q8",device:"wasm",
+      progress_callback:p=>self.postMessage({type:"progress",p:{status:p.status,file:p.file,loaded:p.loaded,total:p.total}})})
+      .then(t=>{ tts=t; self.postMessage({type:"ready"}); })
+      .catch(err=>self.postMessage({type:"error",message:String(err&&err.message||err)}));
+  } else if(m.type==="gen"){
+    chain=chain.then(()=>gen(m)).catch(err=>self.postMessage({type:"genError",key:m.key,message:String(err&&err.message||err)}));
+  }
+};`;
+const ST={worker:null,status:"off",cache:new Map(),busy:null,files:{}};
+let actx=null, src=null;
+function studioKey(i){ const sc=P.story.scenes[i]; return [$("studioVoice").value,$("rate").value,$("lively").checked?1:0,sc.mood,sc.narration].join("|"); }
+function studioSentences(i){
+  const sc=P.story.scenes[i], ss=splitSentences(sc.narration);
+  return ss.map((t,si)=>{ const pr=prosody(sc,si,ss.length,t); return {text:t,speed:pr.speed,pause:pr.pause}; });
+}
+function studioStart(){
+  if(ST.worker||ST.status==="failed") return;
+  try{
+    const url=URL.createObjectURL(new Blob([WORKER_SRC],{type:"text/javascript"}));
+    ST.worker=new Worker(url,{type:"module"});
+  }catch(e){ studioFail("this browser cannot run it"); return; }
+  ST.status="loading"; ST.files={};
+  $("voiceProg").hidden=false; $("voiceProg").value=0;
+  setStatus("voiceStatus","Loading the studio voice…");
+  ST.worker.onmessage=onStudioMsg;
+  ST.worker.onerror=ev=>{ ev.preventDefault&&ev.preventDefault(); studioFail("the voice engine could not start"); };
+  ST.worker.postMessage({type:"load"});
+}
+function onStudioMsg(e){
+  const m=e.data;
+  if(m.type==="progress"){
+    const p=m.p;
+    if(p.file && p.total){ ST.files[p.file]={l:p.loaded||0,t:p.total}; }
+    let l=0,t=0; for(const k in ST.files){ l+=ST.files[k].l; t+=ST.files[k].t; }
+    if(t>0){ $("voiceProg").value=l/t; setStatus("voiceStatus","Downloading the studio voice: "+Math.round(l/1048576)+" of "+Math.round(t/1048576)+" MB"); }
+  } else if(m.type==="ready"){
+    ST.status="ready"; $("voiceProg").hidden=true;
+    setStatus("voiceStatus","Studio voice ready.","ok");
+    if(P.waiting) setStatus("playStatus","Preparing the voice for this scene…");
+    pumpStudio();
+  } else if(m.type==="done"){
+    if(ST.busy===m.key) ST.busy=null;
+    ST.cache.set(m.key,{audio:m.audio,sr:m.sr});
+    if(P.playing && P.waiting && m.key===studioKey(P.idx)){
+      P.waiting=false; $("stagebox").classList.remove("paused"); setStatus("playStatus","");
+      P.last=performance.now(); playStudio(P.idx);
+    }
+    pumpStudio();
+  } else if(m.type==="genError"){
+    if(ST.busy===m.key) ST.busy=null;
+    studioFail("a scene could not be voiced ("+m.message+")");
+  } else if(m.type==="error"){
+    studioFail("the voice model could not load ("+m.message+")");
+  }
+}
+function studioFail(why){
+  ST.status="failed"; ST.busy=null; $("voiceProg").hidden=true;
+  try{ ST.worker&&ST.worker.terminate(); }catch(e){} ST.worker=null;
+  setStatus("voiceStatus","The studio voice is not available: "+why+". Using the browser voice instead.","bad");
+  if(P.playing && P.waiting){ P.waiting=false; startScene(P.idx,true); }
+}
+function pumpStudio(){
+  if(ST.status!=="ready"||ST.busy||!P.story) return;
+  const n=P.story.scenes.length;
+  for(let k=0;k<n;k++){
+    const i=(P.idx+k)%n, key=studioKey(i);
+    if(!ST.cache.has(key)){ ST.busy=key; ST.worker.postMessage({type:"gen",key,voice:$("studioVoice").value,sentences:studioSentences(i)}); return; }
+  }
+}
+function ensureCtx(){
+  if(!actx){ const C=window.AudioContext||window.webkitAudioContext; if(C) actx=new C(); }
+  if(actx && actx.state==="suspended") actx.resume().catch(()=>{});
+  return actx;
+}
+function playStudio(i){
+  const c=ST.cache.get(studioKey(i)), ctx=ensureCtx(); if(!c||!ctx) return false;
+  stopStudio();
+  const buf=ctx.createBuffer(1,c.audio.length,c.sr); buf.copyToChannel(c.audio,0);
+  const s=ctx.createBufferSource(); s.buffer=buf; s.connect(ctx.destination);
+  s.onended=()=>{ if(src===s){ src=null; P.narrDone=true; } };
+  src=s; s.start(); return true;
+}
+function stopStudio(){ if(src){ const s=src; src=null; s.onended=null; try{ s.stop(); }catch(e){} } }
+function resetStudioCache(){ ST.cache.clear(); ST.busy=null; }
 const audio = new Audio(); let audioUrl=null;
 const synth = window.speechSynthesis || null;
 let voices=[];
 
 function words(s){ return String(s||"").trim().split(/\s+/).filter(Boolean).length; }
 function splitSentences(s){ const m=String(s||"").match(/[^.!?。]+[.!?。]*\s*/g); return (m||[String(s||"")]).map(x=>x.trim()).filter(Boolean); }
-function mode(){ const m=$("mode").value; if(m==="browser"&&(P.fellBack||!synth)) return "none"; if(m==="file"&&!audioUrl) return "none"; return m; }
+function mode(){
+  let m=$("mode").value;
+  if(m==="studio" && (ST.status==="failed" || $("lang").value==="ms")) m="browser";
+  if(m==="browser"&&(P.fellBack||!synth)) return "none";
+  if(m==="file"&&!audioUrl) return "none";
+  return m;
+}
 
 function loadStory(story){
   stopAll();
@@ -481,7 +636,7 @@ function loadStory(story){
   const c=$("cautions"); c.replaceChildren();
   (story.cautions||[]).forEach(t=>{ const li=document.createElement("li"); li.textContent=t; c.append(li); });
   $("cautionCard").hidden=!(story.cautions&&story.cautions.length);
-  $("scriptText").value=story.scenes.map(s=>s.narration).join("\n\n");
+  fillScript();
   computeStarts();
   showStill(0);
   setStatus("playStatus","");
@@ -500,7 +655,7 @@ function updateUI(){
 }
 function showStill(i){ P.idx=i; drawScene(P.story.scenes[i],false); $("stagebox").classList.remove("paused"); updateUI(); }
 function stopSpeech(){ P.token++; if(synth){ try{ synth.cancel(); }catch(e){} } }
-function stopAll(){ P.playing=false; stopSpeech(); try{ audio.pause(); }catch(e){} }
+function stopAll(){ P.playing=false; P.waiting=false; stopSpeech(); stopStudio(); try{ audio.pause(); }catch(e){} }
 
 function startScene(i, seek){
   const sc=P.story.scenes[i];
@@ -509,10 +664,18 @@ function startScene(i, seek){
   $("stagebox").classList.remove("paused");
   P.minMs=(drawT+0.8)*1000;
   P.estMs=Math.max(P.minMs, words(sc.narration)/2.5*1000/Number($("rate").value)+900);
-  P.sents=splitSentences(sc.narration); P.sentIdx=0;
-  stopSpeech();
+  P.sents=splitSentences(sc.narration); P.sentIdx=0; P.waiting=false;
+  stopSpeech(); stopStudio();
   const m=mode();
-  if(m==="browser") speakFrom(0);
+  if(m==="studio"){
+    studioStart();
+    if(!playStudio(i)){
+      P.waiting=true; $("stagebox").classList.add("paused");
+      setStatus("playStatus", ST.status==="ready"?"Preparing the voice for this scene…":"Loading the studio voice. The video starts as soon as it is ready.");
+    }
+    pumpStudio();
+  }
+  else if(m==="browser") speakFrom(0);
   else if(m==="file"){ if(seek && isFinite(audio.duration)) audio.currentTime=P.starts[i]*audio.duration; audio.play().catch(()=>{}); }
   updateUI();
 }
@@ -520,10 +683,11 @@ function speakFrom(si){
   if(si>=P.sents.length){ P.narrDone=true; return; }
   const u=new SpeechSynthesisUtterance(P.sents[si]);
   const v=voices[$("voice").value]; if(v){ u.voice=v; u.lang=v.lang; } else u.lang=$("lang").value==="ms"?"ms-MY":"en-GB";
-  u.rate=Number($("rate").value);
+  const pr=prosody(P.story.scenes[P.idx],si,P.sents.length,P.sents[si]);
+  u.rate=pr.rate; u.pitch=pr.pitch;
   const tk=++P.token; let started=false;
   u.onstart=()=>{ started=true; };
-  u.onend=()=>{ if(tk!==P.token) return; P.sentIdx=si+1; speakFrom(si+1); };
+  u.onend=()=>{ if(tk!==P.token) return; P.sentIdx=si+1; const gap=si+1<P.sents.length?pr.pause*1000:0; setTimeout(()=>{ if(tk===P.token && P.playing) speakFrom(si+1); }, gap); };
   u.onerror=ev=>{ if(tk!==P.token) return; if(ev.error==="interrupted"||ev.error==="canceled") return; fallBack(); };
   try{ synth.speak(u); }catch(e){ fallBack(); return; }
   setTimeout(()=>{ if(tk===P.token && !started && P.playing) fallBack(); }, 5000);
@@ -534,7 +698,9 @@ function fallBack(){
 }
 function tick(now){
   if(!P.playing) return;
-  const dt=Math.min(100, now-P.last); P.last=now; P.elapsed+=dt;
+  const dt=Math.min(100, now-P.last); P.last=now;
+  if(P.waiting){ requestAnimationFrame(tick); return; }
+  P.elapsed+=dt;
   const m=mode(), n=P.story.scenes.length; let advance=false;
   if(m==="file"){
     const d=audio.duration;
@@ -559,8 +725,12 @@ function play(){
   P.playing=true; P.last=performance.now();
   const resuming=$("stagebox").classList.contains("paused");
   if(resuming && !atEnd){
-    $("stagebox").classList.remove("paused");
     const m=mode();
+    if(m==="studio"){
+      if(src) ensureCtx();
+      else if(!P.narrDone){ startScene(P.idx,true); requestAnimationFrame(tick); return; }
+    }
+    $("stagebox").classList.remove("paused");
     if(m==="browser") speakFrom(P.sentIdx); else if(m==="file") audio.play().catch(()=>{});
     updateUI();
   } else startScene(atEnd?0:P.idx,true);
@@ -569,6 +739,7 @@ function play(){
 function pause(){
   if(!P.playing) return;
   P.playing=false; stopSpeech(); try{ audio.pause(); }catch(e){}
+  if(actx && actx.state==="running") actx.suspend().catch(()=>{});
   $("stagebox").classList.add("paused"); updateUI();
 }
 function goTo(i){
@@ -602,15 +773,32 @@ if(synth){ fillVoices(); try{ synth.addEventListener("voiceschanged",fillVoices)
 function modeChanged(){
   const m=$("mode").value;
   $("fileField").hidden=m!=="file";
-  $("voiceField").hidden=$("rateField").hidden=m!=="browser";
-  if(m==="browser"&&!synth) setStatus("voiceStatus","This browser has no built-in voice, so the video uses timed captions.","bad");
+  $("studioField").hidden=$("studioHint").hidden=m!=="studio";
+  $("voiceField").hidden=m!=="browser";
+  $("rateField").hidden=$("livelyField").hidden=!(m==="browser"||m==="studio");
+  if(m!=="studio") $("voiceProg").hidden=true;
+  if(m==="studio"&&$("lang").value==="ms") setStatus("voiceStatus","The studio voice speaks English only, so Bahasa Melayu narration uses the browser voice.");
+  else if(m==="studio"&&ST.status==="failed") setStatus("voiceStatus","The studio voice could not load on this device, so the browser voice is used instead.","bad");
+  else if(m==="studio"&&ST.status==="ready") setStatus("voiceStatus","Studio voice ready.","ok");
+  else if(m==="studio"&&ST.status==="loading") $("voiceProg").hidden=false;
+  else if(m==="browser"&&!synth) setStatus("voiceStatus","This browser has no built-in voice, so the video uses timed captions.","bad");
   else if(m==="file"&&!audioUrl) setStatus("voiceStatus","No audio file loaded yet. Until then the video uses timed captions.");
   else setStatus("voiceStatus","");
   if(P.playing){ pause(); }
 }
 $("mode").addEventListener("change",modeChanged);
 $("rate").addEventListener("input",()=>{ $("rateVal").textContent=Number($("rate").value).toFixed(2).replace(/0$/,""); });
-$("lang").addEventListener("change",fillVoices);
+function voiceSettingChanged(){ resetStudioCache(); if(P.playing){ pause(); } pumpStudio(); }
+$("rate").addEventListener("change",voiceSettingChanged);
+$("studioVoice").addEventListener("change",voiceSettingChanged);
+$("lively").addEventListener("change",voiceSettingChanged);
+$("lang").addEventListener("change",()=>{ fillVoices(); modeChanged(); });
+function fillScript(){
+  if(!P.story) return;
+  const tags=$("emoTags").checked;
+  $("scriptText").value=P.story.scenes.map(s=>(tags?"[emotion:"+(s.mood||"warm")+"] ":"")+s.narration).join("\n\n");
+}
+$("emoTags").addEventListener("change",fillScript);
 $("audioFile").addEventListener("change",ev=>{
   const f=ev.target.files[0]; if(!f) return;
   if(audioUrl) URL.revokeObjectURL(audioUrl);
@@ -690,12 +878,13 @@ function schema(L){
   },required:["icon","label","detail","value","display"],additionalProperties:false};
   const scene={type:"object",properties:{
     layout:{type:"string",enum:LAYOUTS},
+    mood:{type:"string",enum:MOOD_NAMES,description:"How the narrator should sound in this scene. excited: a striking result or the takeaway. surprised: an unexpected finding. curious: the hook or the research question. warm: people, participants and everyday relevance. calm: method details. serious: limitations, risks or caution."},
     heading:{type:"string",description:"On-screen heading, under 8 words. Not a copy of the narration."},
     narration:{type:"string",description:"What the voice says during this scene, "+L.w+" words, written to be heard."},
     highlight:{type:"string",description:"For 'number' only: the big figure, at most 8 characters, e.g. '312' or '41%'. Otherwise an empty string."},
     note:{type:"string",description:"title: authors and year. statement: the main on-screen sentence, under 22 words. bars: what is measured and the unit. number: what the figure means, under 16 words. Otherwise an optional footnote or an empty string."},
     items:{type:"array",maxItems:5,items:item,description:"title: 0 or 1 item (icon only). statement: 1 item (icon). icons and flow: 2 to 4. compare: exactly 2, with detail. list: 2 to 4. bars: 2 to 5. number: empty."}
-  },required:["layout","heading","narration","highlight","note","items"],additionalProperties:false};
+  },required:["layout","mood","heading","narration","highlight","note","items"],additionalProperties:false};
   return {type:"object",properties:{
     title:{type:"string",description:"Plain-language title for the video, under 12 words."},
     authors:{type:"string",description:"Authors and year as given in the paper, e.g. 'Lee & Tan (2023)'. Empty string if not stated."},
@@ -725,6 +914,9 @@ Story:
 
 Narration:
 - ${L.w} words per scene, in ${lang}, written to be heard: short sentences, plain words, no brackets, no citations, no symbols.
+- Sound like an enthusiastic science communicator talking to a friend, not like an abstract. Mix short punchy sentences with longer ones. Open the hook with a question or a surprising fact. Use turns such as "but", "so" and "here is the twist" to build a little tension, and let the key finding land in a short sentence of its own.
+- Punctuate for the voice: a question mark where a speaker's voice would rise, an occasional exclamation mark for real excitement, and full stops where a speaker would pause. The excitement must never overstate the findings.
+- Choose each scene's "mood" to fit what it says, and vary the moods across the video so the delivery does not stay flat.
 - Write numbers so they can be read aloud naturally, and explain any abbreviation the first time.
 - The narration must make sense without the picture. On-screen text is short and supports the narration without repeating it word for word. On-screen text is also in ${lang}.
 
@@ -783,7 +975,7 @@ function normalise(o){
   if(!o||typeof o!=="object"||!Array.isArray(o.scenes)||!o.scenes.length) throw new Error("The JSON has no \"scenes\" list. Make sure you copied the reply to the MyPhD Studio prompt.");
   const scenes=o.scenes.map((s,i)=>{
     s=s||{};
-    const sc={layout:LAYOUTS.includes(s.layout)?s.layout:"statement",heading:str(s.heading),narration:str(s.narration),highlight:str(s.highlight),note:str(s.note),
+    const sc={layout:LAYOUTS.includes(s.layout)?s.layout:"statement",mood:MOOD_NAMES.includes(s.mood)?s.mood:"warm",heading:str(s.heading),narration:str(s.narration),highlight:str(s.highlight),note:str(s.note),
       items:(Array.isArray(s.items)?s.items:[]).map(it=>({icon:str(it&&it.icon),label:str(it&&it.label),detail:str(it&&it.detail),value:(it&&typeof it.value==="number")?it.value:null,display:str(it&&it.display)}))};
     if(!sc.narration) throw new Error("Scene "+(i+1)+" has no narration. Ask Claude to send the complete JSON again.");
     if(sc.layout==="bars"&&sc.items.filter(it=>it.value!=null).length<2) sc.layout="list";
