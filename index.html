@@ -7,6 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Figtree:wght@400;500;600;700&family=Patrick+Hand&family=Kalam:wght@400;700&family=Architects+Daughter&display=swap" rel="stylesheet">
 <style>
+@font-face{font-family:"Excalifont";src:url("https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.18.1/dist/prod/fonts/Excalifont/Excalifont-Regular-a88b72a24fb54c9f94e3b5fdaa7481c9.woff2") format("woff2");font-display:swap}
 /* Layout idea: a workbench. Three numbered steps on the left, the sketchbook stage on the right; one column on narrow screens. Single light theme by choice: the stage is paper. */
 :root{
   color-scheme: light;
@@ -388,6 +389,8 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
   </div>
 </div>
 
+<script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/lucide@1.64.0/dist/umd/lucide.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js"></script>
 <script>
@@ -428,7 +431,52 @@ const ICONS = {
   graduation:"M50 20L92 40L50 60L8 40ZM26 50V70C38 82 62 82 74 70V50M92 40V64"
 };
 const ICON_NAMES = Object.keys(ICONS);
-const LAYOUTS = ["title","statement","icons","flow","compare","list","bars","number"];
+/* Rough.js draws every line as a real sketched stroke; without it, a wobble filter stands in */
+const RG=(window.rough&&window.rough.generator)?window.rough.generator():null;
+const useRough=()=>!!(RG&&THEME.rough);
+function seedOf(str){ let h=2166136261; for(let i=0;i<str.length;i++){ h^=str.charCodeAt(i); h=Math.imul(h,16777619); } return (h>>>0)%2147483646+1; }
+/* Rewrite path data with explicit separators, including compact arc flags such as "a4 4 0 01-3-4" */
+function normPath(d){
+  const out=[], src=String(d), num=/[-+]?(?:\d+\.?\d*|\.\d+)(?:[eE][-+]?\d+)?/y; let i=0, cmd="", k=0;
+  while(i<src.length){
+    const ch=src[i];
+    if(ch===" "||ch===","||ch==="\n"||ch==="\t"){ i++; continue; }
+    if(/[MmLlHhVvCcSsQqTtAaZz]/.test(ch)){ cmd=ch; k=0; out.push(ch); i++; continue; }
+    if((cmd==="A"||cmd==="a")&&(k%7===3||k%7===4)&&(ch==="0"||ch==="1")){ out.push(ch); i++; k++; continue; }
+    num.lastIndex=i; const m=num.exec(src); if(!m){ i++; continue; }
+    out.push(m[0]); i=num.lastIndex; k++;
+  }
+  return out.join(" ");
+}
+/* Lucide icons (ISC licence): about 1,500 more things to draw, redrawn by hand */
+const LUC={};
+const kebab=k=>k.replace(/([a-z0-9])([A-Z])/g,"$1-$2").replace(/([A-Z])([A-Z][a-z])/g,"$1-$2").replace(/([a-zA-Z])(\d)/g,"$1-$2").toLowerCase();
+try{ if(window.lucide&&window.lucide.icons) for(const k in window.lucide.icons) LUC[kebab(k)]=window.lucide.icons[k]; }catch(e){}
+function nodesToD(nodes){
+  const f=v=>+v||0, parts=[];
+  for(const n of nodes){
+    const t=n[0], a=n[1]||{};
+    if(t==="path") parts.push(a.d);
+    else if(t==="line") parts.push("M"+f(a.x1)+" "+f(a.y1)+"L"+f(a.x2)+" "+f(a.y2));
+    else if(t==="polyline"||t==="polygon"){ const pts=String(a.points||"").trim().split(/[\s,]+/).map(Number); let d="M"+pts[0]+" "+pts[1]; for(let i=2;i+1<pts.length;i+=2) d+="L"+pts[i]+" "+pts[i+1]; parts.push(d+(t==="polygon"?"Z":"")); }
+    else if(t==="circle"||t==="ellipse"){ const cx=f(a.cx), cy=f(a.cy), rx=f(a.r||a.rx), ry=f(a.r||a.ry); parts.push("M"+(cx-rx)+" "+cy+"A"+rx+" "+ry+" 0 1 0 "+(cx+rx)+" "+cy+"A"+rx+" "+ry+" 0 1 0 "+(cx-rx)+" "+cy); }
+    else if(t==="rect"){ const x=f(a.x), y=f(a.y), w=f(a.width), h=f(a.height), r=Math.min(f(a.rx||a.ry),w/2,h/2);
+      parts.push(r?"M"+(x+r)+" "+y+"H"+(x+w-r)+"A"+r+" "+r+" 0 0 1 "+(x+w)+" "+(y+r)+"V"+(y+h-r)+"A"+r+" "+r+" 0 0 1 "+(x+w-r)+" "+(y+h)+"H"+(x+r)+"A"+r+" "+r+" 0 0 1 "+x+" "+(y+h-r)+"V"+(y+r)+"A"+r+" "+r+" 0 0 1 "+(x+r)+" "+y+"Z"
+                  :"M"+x+" "+y+"H"+(x+w)+"V"+(y+h)+"H"+x+"Z"); }
+  }
+  return parts.join(" ");
+}
+const iconCache={};
+function iconDef(name){
+  let n=String(name||"").trim().toLowerCase().replace(/[\s_]+/g,"-");
+  if(!n) return null;
+  if(ICONS[n]) return {d:ICONS[n],box:100};
+  if(iconCache[n]!==undefined) return iconCache[n];
+  let nodes=LUC[n]||LUC[n.replace(/-icon$/,"")]||LUC[n.replace(/s$/,"")];
+  return iconCache[n]=nodes?{d:normPath(nodesToD(nodes)),box:24}:null;
+}
+const hasIcon=n=>!!iconDef(n);
+const LAYOUTS = ["title","statement","icons","flow","compare","list","bars","line","donut","number"];
 let INK="#1c2740", TEAL="#0c8a80", CORAL="#e4533b", MARK="#ffd94d", MUTED="#586480";
 /* ---------- Styles: one look shared by the video, infographic, slides and carousel ---------- */
 const THEMES={
@@ -436,6 +484,8 @@ const THEMES={
   chalk:     {label:"Chalkboard",bg:"#24372e",pat:"dots",patC:"#30483c",ink:"#f3f1ea",a1:"#8fd6c4",a2:"#f4a28c",mark:"#46664f",muted:"#b8c7bd",font:"Kalam",rough:true},
   blueprint: {label:"Blueprint", bg:"#1d4b87",pat:"grid",patC:"#2c5c98",ink:"#f5f9ff",a1:"#9fd3ff",a2:"#ffcf5c",mark:"#2f6cb3",muted:"#c4d6ee",font:"Architects Daughter",rough:true},
   riso:      {label:"Risograph", bg:"#fbeff2",pat:"dots",patC:"#efcfda",ink:"#262a6b",a1:"#14998b",a2:"#ff4f7b",mark:"#ffe45c",muted:"#5b5e8f",font:"Kalam",rough:true},
+  whiteboard:{label:"Whiteboard",bg:"#ffffff",pat:"grid",patC:"#eef1f4",ink:"#1e1e1e",a1:"#1971c2",a2:"#e03131",mark:"#ffec99",muted:"#495057",font:"Excalifont",
+              fontUrl:"https://cdn.jsdelivr.net/npm/@excalidraw/excalidraw@0.18.1/dist/prod/fonts/Excalifont/Excalifont-Regular-a88b72a24fb54c9f94e3b5fdaa7481c9.woff2",rough:true},
   clean:     {label:"Clean",     bg:"#ffffff",pat:"none",patC:"#ffffff",ink:"#14213d",a1:"#0f6e8c",a2:"#d9480f",mark:"#fde68a",muted:"#5c6475",font:"Figtree",rough:false}
 };
 let THEME=THEMES.notebook;
@@ -468,27 +518,52 @@ function wrap(str, size, maxW){
   return lines;
 }
 function Board(still){
-  const g=S("g"), shapes=S("g",THEME.rough?{filter:still?"url(#roughStill)":"url(#rough)"}:{}), texts=S("g");
+  const g=S("g"), shapes=S("g",(THEME.rough&&!RG)?{filter:still?"url(#roughStill)":"url(#rough)"}:{}), texts=S("g");
   g.append(shapes,texts);
   let t=0.15;
   const b={
     g,
     get time(){ return t; },
     stroke(d,o){ o=o||{};
-      const p=S("path",{d, pathLength:1, class:"ink", stroke:o.color||INK, "stroke-width":o.w||4});
-      if(o.transform) p.setAttribute("transform",o.transform);
-      if(o.opacity) p.setAttribute("opacity",o.opacity);
-      p.style.setProperty("--d",t+"s"); p.style.setProperty("--dur",(o.dur||0.6)+"s");
-      shapes.append(p); t+= (o.step==null?0.4:o.step); return p; },
+      const color=o.color||INK, w=o.w||4;
+      let infos=null;
+      if(useRough()){
+        try{ infos=RG.toPaths(RG.path(normPath(d),{stroke:color,strokeWidth:w,roughness:o.rough||1,bowing:1,
+          maxRandomnessOffset:1.8/(o.scale||1),disableMultiStroke:!!o.opacity,seed:seedOf(d+color)})); }catch(e){ infos=null; }
+      }
+      const grp=S("g");
+      if(o.transform) grp.setAttribute("transform",o.transform);
+      if(o.opacity) grp.setAttribute("opacity",o.opacity);
+      (infos&&infos.length?infos:[{d,stroke:color,strokeWidth:w}]).forEach(pi=>{
+        if(!pi.d||pi.stroke==="none") return;
+        const p=S("path",{d:pi.d, pathLength:1, class:"ink", stroke:pi.stroke||color, "stroke-width":pi.strokeWidth||w});
+        p.style.setProperty("--d",t+"s"); p.style.setProperty("--dur",(o.dur||0.6)+"s"); grp.append(p);
+      });
+      shapes.append(grp); t+= (o.step==null?0.4:o.step); return grp; },
+    /* a filled shape: hand-hatched with Rough.js, a soft tint otherwise */
+    fill(d,color,o){ o=o||{};
+      const grp=S("g",{class:"fade"}); grp.style.setProperty("--d",t+"s");
+      let infos=null;
+      if(useRough()){
+        try{ infos=RG.toPaths(RG.path(normPath(d),{fill:color,fillStyle:o.style||"hachure",hachureGap:o.gap||7,fillWeight:o.weight||2.2,
+          hachureAngle:o.angle==null?-41:o.angle,stroke:"none",roughness:1,seed:seedOf(d+color+"f")})); }catch(e){ infos=null; }
+      }
+      if(infos&&infos.length) infos.forEach(pi=>{ if(!pi.d) return;
+        if(pi.fill&&pi.fill!=="none") grp.append(S("path",{d:pi.d,fill:pi.fill,stroke:"none"}));
+        else if(pi.stroke&&pi.stroke!=="none") grp.append(S("path",{d:pi.d,fill:"none",stroke:pi.stroke,"stroke-width":pi.strokeWidth||2,"stroke-linecap":"round"})); });
+      else grp.append(S("path",{d,fill:color,"fill-opacity":o.solid?1:0.32}));
+      shapes.append(grp); t+=0.12; return grp; },
+    solid(d,color){ const p=S("path",{d,fill:color}); shapes.append(p); return p; },
     icon(name,x,y,size,color){
-      const d=ICONS[name]; if(!d) return false;
-      const s=size/100;
-      b.stroke(d,{transform:"translate("+x+" "+y+") scale("+s+")", w:4/s, color:color||INK, dur:0.9, step:0.55});
+      const ic=iconDef(name); if(!ic) return false;
+      const s=size/ic.box;
+      b.stroke(ic.d,{transform:"translate("+x+" "+y+") scale("+s+")", w:(ic.box===24?3.4:4)/s, scale:s, color:color||INK, dur:0.9, step:0.55});
       return true; },
     numberDot(n,cx,cy,r){
       b.stroke("M"+cx+" "+(cy-r)+"a"+r+" "+r+" 0 1 0 .01 0",{color:TEAL,w:4,step:0.3});
       b.text(String(n),cx,cy+r*0.33,{size:r*1.1,anchor:"middle",color:TEAL,step:0.2}); },
     hatch(x,y,w,h,id){
+      if(useRough()){ w=Math.max(2,w); b.fill("M"+x+" "+y+"H"+(x+w)+"V"+(y+h)+"H"+x+"Z",id==="hatchC"?CORAL:TEAL,{angle:id==="hatchC"?50:-41}); return; }
       const r=S("rect",{x,y,width:Math.max(2,w),height:h,fill:"url(#"+id+")",class:"fade"});
       r.style.setProperty("--d",t+"s"); shapes.append(r); t+=0.15; },
     text(str,x,y,o){ o=o||{};
@@ -513,9 +588,48 @@ function heading(b,sc){
 }
 function arrow(b,x1,y,x2){ b.stroke("M"+x1+" "+y+"H"+x2+"M"+(x2-14)+" "+(y-11)+"L"+x2+" "+y+"L"+(x2-14)+" "+(y+11),{color:CORAL,w:4.5,dur:.4,step:.35}); }
 
+/* ---------- Charts shared by every format ---------- */
+const dotPath=(cx,cy,r)=>"M"+(cx-r)+" "+cy+"a"+r+" "+r+" 0 1 0 "+(2*r)+" 0a"+r+" "+r+" 0 1 0 "+(-2*r)+" 0";
+const numeric=items=>items.filter(it=>typeof it.value==="number"&&isFinite(it.value));
+function chartLine(b,items,x0,y0,w,h,fs){
+  const pts=numeric(items).slice(0,8), n=pts.length; if(n<2) return;
+  const vals=pts.map(p=>p.value); let lo=Math.min(...vals), hi=Math.max(...vals);
+  if(hi===lo){ hi+=1; lo-=1; } const pad=(hi-lo)*0.22; lo-=pad; hi+=pad;
+  const top=y0+fs*1.5, bot=y0+h-fs*2.6, lx=x0+fs*1.6, rx=x0+w-fs*1.6;
+  b.stroke("M"+x0+" "+y0+"V"+bot+"H"+(x0+w),{w:3,step:.25});
+  const P=pts.map((p,i)=>[lx+(rx-lx)*i/(n-1), bot-(p.value-lo)/(hi-lo)*(bot-top)]);
+  b.stroke("M"+P.map(q=>q[0].toFixed(1)+" "+q[1].toFixed(1)).join("L"),{color:TEAL,w:5,dur:1,step:.5});
+  const colW=(rx-lx)/(n-1);
+  P.forEach((q,i)=>{
+    b.fill(dotPath(q[0],q[1],fs*0.32),CORAL,{style:"solid",solid:true});
+    b.stroke(dotPath(q[0],q[1],fs*0.32),{color:CORAL,w:3,step:.08});
+    b.text(pts[i].display||String(pts[i].value),q[0],q[1]-fs*0.8,{size:fs,anchor:"middle",step:.08});
+    b.text(pts[i].label,q[0],bot+fs*1.25,{size:fs*0.82,anchor:"middle",maxW:Math.max(fs*3,colW-8),maxLines:2,color:MUTED,step:.08});
+  });
+}
+function chartDonut(b,items,cx,cy,r,lx,ly,lw,fs){
+  const sl=numeric(items).filter(v=>v.value>0).slice(0,6), tot=sl.reduce((a,v)=>a+v.value,0); if(sl.length<2||!tot) return;
+  const cols=[TEAL,CORAL,MUTED,INK,MARK,TEAL]; let a=-Math.PI/2;
+  sl.forEach((v,i)=>{
+    const a2=a+2*Math.PI*v.value/tot, large=(a2-a)>Math.PI?1:0;
+    const d="M"+cx+" "+cy+"L"+(cx+r*Math.cos(a)).toFixed(1)+" "+(cy+r*Math.sin(a)).toFixed(1)+"A"+r+" "+r+" 0 "+large+" 1 "+(cx+r*Math.cos(a2)).toFixed(1)+" "+(cy+r*Math.sin(a2)).toFixed(1)+"Z";
+    b.fill(d,cols[i],{angle:-41+i*47,gap:6});
+    b.stroke(d,{color:cols[i],w:3.5,step:.2});
+    a=a2;
+  });
+  b.solid(dotPath(cx,cy,r*0.5),THEME.bg);
+  b.stroke(dotPath(cx,cy,r*0.5),{color:INK,w:3,step:.2});
+  const rowH=Math.max(fs*2.5,Math.min(fs*3.4,(r*2)/sl.length));
+  sl.forEach((v,i)=>{
+    const y=ly+rowH*i, sq=fs*0.9;
+    const d="M"+lx+" "+(y-sq*0.8)+"h"+sq+"v"+sq+"h"+(-sq)+"Z";
+    b.fill(d,cols[i],{angle:-41+i*47,gap:5}); b.stroke(d,{color:cols[i],w:3,step:.1});
+    b.text((v.display||String(v.value))+"  "+v.label,lx+sq+fs*0.6,y,{size:fs,maxW:lw-sq-fs,maxLines:2,step:.1});
+  });
+}
 const RENDER = {
   title(b,sc){
-    const ic=(sc.items[0]&&ICONS[sc.items[0].icon])?sc.items[0].icon:"graduation";
+    const ic=(sc.items[0]&&hasIcon(sc.items[0].icon))?sc.items[0].icon:"graduation";
     b.icon(ic,420,40,120,TEAL);
     const lines=wrap(sc.heading,58,820).slice(0,3);
     const y0=250-(lines.length-1)*20;
@@ -526,7 +640,7 @@ const RENDER = {
   },
   statement(b,sc){
     const top=heading(b,sc), it=sc.items[0]||{};
-    const ic=ICONS[it.icon]?it.icon:"lightbulb";
+    const ic=hasIcon(it.icon)?it.icon:"lightbulb";
     b.icon(ic,80,top+50,170,TEAL);
     if(it.label) b.text(it.label,165,top+262,{size:26,maxW:220,maxLines:2,anchor:"middle",color:MUTED});
     b.text(sc.note||it.detail||"",300,top+100,{size:38,maxW:590,maxLines:6});
@@ -561,7 +675,7 @@ const RENDER = {
     const rowH=Math.min(104,(505-top-20)/n);
     items.forEach((it,i)=>{
       const y=top+30+rowH*i;
-      b.icon(ICONS[it.icon]?it.icon:"check",70,y,40,i%2?CORAL:TEAL);
+      b.icon(hasIcon(it.icon)?it.icon:"check",70,y,40,i%2?CORAL:TEAL);
       const h=b.text(it.label,130,y+32,{size:34,maxW:760,maxLines:it.detail?1:2});
       if(it.detail) b.text(it.detail,130,y+32+h-4,{size:22,maxW:760,maxLines:1,color:MUTED});
     });
@@ -579,6 +693,16 @@ const RENDER = {
       b.text(it.display||String(it.value),322+w+14,y+bh*0.72,{size:28});
     });
     if(sc.note) b.text(sc.note,60,512,{size:22,maxW:840,maxLines:1,color:MUTED});
+  },
+  line(b,sc){
+    const top=heading(b,sc);
+    chartLine(b,sc.items,90,top+20,800,488-top-20,26);
+    if(sc.note) b.text(sc.note,60,516,{size:22,maxW:840,maxLines:1,color:MUTED});
+  },
+  donut(b,sc){
+    const top=heading(b,sc), r=Math.min(165,(492-top)/2-8), cy=top+(492-top)/2+6;
+    chartDonut(b,sc.items,80+r,cy,r,140+2*r,cy-r+40,840-2*r-60,26);
+    if(sc.note) b.text(sc.note,60,516,{size:22,maxW:840,maxLines:1,color:MUTED});
   },
   number(b,sc){
     const top=heading(b,sc), txt=String(sc.highlight||"").slice(0,12), cy=top+150;
@@ -1071,11 +1195,11 @@ const LENGTHS={
 };
 function schema(L){
   const item={type:"object",properties:{
-    icon:{type:"string",enum:ICON_NAMES.concat([""]),description:"A sketch from the library, or an empty string for none. In 'flow', an empty icon shows the step number."},
+    icon:iconField("In 'flow', an empty icon shows the step number."),
     label:{type:"string",description:"Short on-screen label, 1 to 5 words."},
     detail:{type:"string",description:"Optional second line, under 12 words, or an empty string."},
-    value:{type:["number","null"],description:"For 'bars' only: the figure from the paper that sizes the bar. Otherwise null."},
-    display:{type:"string",description:"For 'bars' only: the value as shown, e.g. '63%' or 'r = .41'. Otherwise an empty string."}
+    value:{type:["number","null"],description:"For 'bars', 'line' and 'donut' only: the figure from the paper. Otherwise null."},
+    display:{type:"string",description:"For 'bars', 'line' and 'donut' only: the value as shown, e.g. '63%' or 'r = .41'. Otherwise an empty string."}
   },required:["icon","label","detail","value","display"],additionalProperties:false};
   const scene={type:"object",properties:{
     layout:{type:"string",enum:LAYOUTS},
@@ -1083,8 +1207,8 @@ function schema(L){
     heading:{type:"string",description:"On-screen heading, under 8 words. Not a copy of the narration."},
     narration:{type:"string",description:"What the voice says during this scene, written to be heard. Its length follows the scene's importance, as the instructions describe, and never exceeds 55 words."},
     highlight:{type:"string",description:"For 'number' only: the big figure, at most 8 characters, e.g. '312' or '41%'. Otherwise an empty string."},
-    note:{type:"string",description:"title: authors and year. statement: the main on-screen sentence, under 22 words. bars: what is measured and the unit. number: what the figure means, under 16 words. Otherwise an optional footnote or an empty string."},
-    items:{type:"array",maxItems:5,items:item,description:"title: 0 or 1 item (icon only). statement: 1 item (icon). icons and flow: 2 to 4. compare: exactly 2, with detail. list: 2 to 4. bars: 2 to 5. number: empty."}
+    note:{type:"string",description:"title: authors and year. statement: the main on-screen sentence, under 22 words. bars, line and donut: what is measured and the unit. number: what the figure means, under 16 words. Otherwise an optional footnote or an empty string."},
+    items:{type:"array",maxItems:5,items:item,description:"title: 0 or 1 item (icon only). statement: 1 item (icon). icons and flow: 2 to 4. compare: exactly 2, with detail. list: 2 to 4. bars: 2 to 5. line: 2 to 8 points in order, labelled with the time point or condition. donut: 2 to 5 parts of one whole. number: empty."}
   },required:["layout","mood","heading","narration","highlight","note","items"],additionalProperties:false};
   return {type:"object",properties:{
     title:{type:"string",description:"The video's title, under 12 words: the question the video answers, or a promise of its answer. Not the paper's own title."},
@@ -1150,7 +1274,9 @@ Layouts:
 - "flow": 2 to 4 steps joined by arrows, for the procedure or for a chain such as predictor, mediator and outcome.
 - "compare": two panels side by side, for two groups, two conditions or before and after.
 - "list": 2 to 4 short points with tick marks.
-- "bars": a bar chart of 2 to 5 real figures from the paper.
+- "bars": a bar chart of 2 to 5 real figures from the paper, to compare groups or conditions.
+- "line": a line chart of 2 to 8 real values of one measure from the paper, in order, such as across time points, waves or doses.
+- "donut": a donut chart of 2 to 5 parts of one whole from the paper, as percentages that add up to about 100, such as the make-up of the sample.
 - "number": one big figure from the paper with its meaning in "note".
 Leave fields a layout does not use as an empty string, null or an empty list.
 
@@ -1200,6 +1326,8 @@ function normalise(o){
       items:(Array.isArray(s.items)?s.items:[]).map(it=>({icon:str(it&&it.icon),label:str(it&&it.label),detail:str(it&&it.detail),value:(it&&typeof it.value==="number")?it.value:null,display:str(it&&it.display)}))};
     if(!sc.narration) throw new Error("Scene "+(i+1)+" has no narration. Ask Claude to send the complete JSON again.");
     if(sc.layout==="bars"&&sc.items.filter(it=>it.value!=null).length<2) sc.layout="list";
+    if((sc.layout==="line"||sc.layout==="donut")&&numeric(sc.items).length<2) sc.layout=sc.items.length?"list":"statement";
+    if(sc.layout==="donut"&&numeric(sc.items).some(it=>it.value<=0)) sc.layout="bars";
     if(sc.layout==="number"&&!sc.highlight) sc.layout="statement";
     if(sc.layout==="compare"&&sc.items.length<2) sc.layout="list";
     if((sc.layout==="icons"||sc.layout==="flow"||sc.layout==="list")&&!sc.items.length) sc.layout="statement";
@@ -1262,6 +1390,9 @@ const fontCss={};
 function embeddedFont(){                      /* the style's font, inlined so exported images keep it */
   const fam=THEME.font;
   if(!fontCss[fam]) fontCss[fam]=(async()=>{
+    if(THEME.fontUrl){
+      try{ return '@font-face{font-family:"'+fam+'";src:url('+(await blobToDataURL(await (await fetch(THEME.fontUrl)).blob()))+') format("woff2")}'; }catch(e){ return ""; }
+    }
     try{
       let css=await (await fetch("https://fonts.googleapis.com/css2?family="+fam.replace(/ /g,"+")+(fam==="Figtree"?":wght@400;600":"")+"&display=block")).text();
       for(const u of [...new Set([...css.matchAll(/url\((https:[^)]+)\)/g)].map(m=>m[1]))]){
@@ -1323,7 +1454,7 @@ JSON Schema (for reference only, do not repeat it in your reply):
 ${JSON.stringify(sch)}`;
 }
 const cautionsField={type:"array",items:{type:"string"},description:"Anything simplified, uncertain or unclear in the text that the user should check against the paper. Can be empty."};
-const iconField=d=>({type:"string",enum:ICON_NAMES.concat([""]),description:d||"A sketch from the library, or an empty string for none."});
+const iconField=d=>({type:"string",description:"A sketch to draw. Use one of our hand-drawn favourites when it fits ("+ICON_NAMES.join(", ")+"). Otherwise use any Lucide icon name in kebab-case, as listed at lucide.dev/icons, choosing the most specific one that exists, for example 'smartphone', 'message-circle', 'users', 'heart-pulse', 'flask-conical', 'school', 'pill' or 'baby'. Use an empty string for none."+(d?" "+d:"")});
 const barItem={type:"object",properties:{label:{type:"string",description:"Bar name, 1 to 4 words."},value:{type:"number",description:"The figure from the paper that sizes the bar."},display:{type:"string",description:"The value as shown, e.g. '63%' or '4.2 out of 7'."}},required:["label","value","display"],additionalProperties:false};
 const plainStats="Translate statistics into plain meaning that matches the authors' interpretation, for example \"a moderate link\" or \"about twice as likely\". Exact figures may appear where a field asks for a number.";
 
@@ -1343,10 +1474,11 @@ function infoSchema(){
     findings:{type:"array",minItems:2,maxItems:4,description:"2 to 4 findings, most important first.",items:{type:"object",properties:{
       icon:iconField(),text:{type:"string",description:"One plain sentence, under 18 words."}},required:["icon","text"],additionalProperties:false}},
     chart:{anyOf:[{type:"object",properties:{
+      type:{type:"string",enum:["bar","line","donut"],description:"bar: compare groups or conditions. line: one measure across time points or ordered steps. donut: parts of one whole, as percentages that add up to about 100."},
       title:{type:"string",description:"Chart heading, under 7 words."},
       note:{type:"string",description:"What is measured and the unit, under 12 words."},
-      bars:{type:"array",minItems:2,maxItems:5,items:barItem}},required:["title","note","bars"],additionalProperties:false},{type:"null"}],
-      description:"A bar chart of real figures from the paper that share one unit, or null if the paper has none that suit."},
+      bars:{type:"array",minItems:2,maxItems:8,description:"The bars, points in order, or slices: 2 to 5, or up to 8 points for a line.",items:barItem}},required:["type","title","note","bars"],additionalProperties:false},{type:"null"}],
+      description:"A chart of real figures from the paper that share one unit, or null if the paper has none that suit."},
     limitation:{type:"string",description:"The main limitation, under 26 words, framed as what the study cannot tell us."},
     takeaway:{type:"string",description:"The one thing to remember, under 20 words."},
     cautions:cautionsField
@@ -1374,8 +1506,8 @@ ${replyBlock(infoSchema())}`;
 }
 function normInfo(o){
   if(!o||typeof o!=="object"||!o.title||!o.answer) throw new Error("This doesn't look like an infographic reply. Make sure you pasted Claude's reply to the infographic prompt.");
-  const chart=o.chart&&typeof o.chart==="object"?{title:str(o.chart.title),note:str(o.chart.note),bars:arr(o.chart.bars).filter(b=>b&&typeof b.value==="number"&&isFinite(b.value)).slice(0,5).map(b=>({label:str(b.label),value:b.value,display:str(b.display)||String(b.value)}))}:null;
-  return {format:"infographic",title:str(o.title),citation:str(o.citation),answer:str(o.answer),heroIcon:ICONS[o.heroIcon]?o.heroIcon:"lightbulb",
+  const chart=o.chart&&typeof o.chart==="object"?{type:["bar","line","donut"].includes(o.chart.type)?o.chart.type:"bar",title:str(o.chart.title),note:str(o.chart.note),bars:arr(o.chart.bars).filter(b=>b&&typeof b.value==="number"&&isFinite(b.value)).slice(0,8).map(b=>({label:str(b.label),value:b.value,display:str(b.display)||String(b.value)}))}:null;
+  return {format:"infographic",title:str(o.title),citation:str(o.citation),answer:str(o.answer),heroIcon:hasIcon(o.heroIcon)?o.heroIcon:"lightbulb",
     keyStats:arr(o.keyStats).slice(0,3).map(k=>({value:str(k&&k.value).slice(0,10),label:str(k&&k.label)})).filter(k=>k.value),
     method:arr(o.method).slice(0,3).map(m=>({icon:str(m&&m.icon),label:str(m&&m.label),detail:str(m&&m.detail)})),
     findings:arr(o.findings).slice(0,4).map(f=>({icon:str(f&&f.icon),text:str(f&&f.text)})).filter(f=>f.text),
@@ -1432,10 +1564,18 @@ function drawInfographic(d){
     y+=Math.max(86,h+44);
   });
   /* chart */
-  if(d.chart){
+  if(d.chart&&d.chart.type==="donut"&&d.chart.bars.some(x=>x.value<=0)) d.chart.type="bar";
+  if(d.chart&&d.chart.type&&d.chart.type!=="bar"){
     y+=24;
     y+=markHead(b,d.chart.title||"In numbers",80,y+30,40,1000)+40;
-    const bars=d.chart.bars, max=Math.max(1e-9,...bars.map(x=>Math.abs(x.value))), bh=40, rowH=74;
+    if(d.chart.type==="line"){ chartLine(b,d.chart.bars,80,y,1040,380,28); y+=390; }
+    else { const r=170; chartDonut(b,d.chart.bars,80+r+20,y+r+10,r,520,y+70,600,30); y+=2*r+50; }
+    if(d.chart.note) y+=b.text(d.chart.note,80,y+10,{size:24,maxW:1040,maxLines:2,color:MUTED});
+    y+=20;
+  } else if(d.chart){
+    y+=24;
+    y+=markHead(b,d.chart.title||"In numbers",80,y+30,40,1000)+40;
+    const bars=d.chart.bars.slice(0,5), max=Math.max(1e-9,...bars.map(x=>Math.abs(x.value))), bh=40, rowH=74;
     b.stroke("M372 "+(y-10)+"V"+(y+rowH*bars.length-14),{w:3.5});
     bars.forEach((x,i)=>{
       const yy=y+rowH*i, w=Math.max(8,600*Math.abs(x.value)/max);
@@ -1502,8 +1642,8 @@ function slidesSchema(T){
     icon:iconField("A sketch from the library, or an empty string for none. In 'flow', an empty icon shows the step number."),
     label:{type:"string",description:"Short on-slide label, 1 to 5 words."},
     detail:{type:"string",description:"Optional second line, under 12 words, or an empty string."},
-    value:{type:["number","null"],description:"For 'bars' only: the figure from the paper that sizes the bar. Otherwise null."},
-    display:{type:"string",description:"For 'bars' only: the value as shown, e.g. '63%' or 'r = .41'. Otherwise an empty string."}
+    value:{type:["number","null"],description:"For 'bars', 'line' and 'donut' only: the figure from the paper. Otherwise null."},
+    display:{type:"string",description:"For 'bars', 'line' and 'donut' only: the value as shown, e.g. '63%' or 'r = .41'. Otherwise an empty string."}
   },required:["icon","label","detail","value","display"],additionalProperties:false};
   return {type:"object",properties:{
     format:{type:"string",const:"slides"},
@@ -1514,8 +1654,8 @@ function slidesSchema(T){
       heading:{type:"string",description:"The slide's headline. On content slides, a short claim the slide supports, under 11 words."},
       notes:{type:"string",description:"Speaker notes: what the presenter says on this slide, written to be spoken."},
       highlight:{type:"string",description:"For 'number' only: the big figure, at most 8 characters. Otherwise an empty string."},
-      note:{type:"string",description:"title: authors and year. statement: the main on-slide sentence, under 22 words. bars: what is measured and the unit. number: what the figure means, under 16 words. Otherwise an optional footnote or an empty string."},
-      items:{type:"array",maxItems:5,items:item,description:"title: 0 or 1 item (icon only). statement: 1 item (icon). icons and flow: 2 to 4. compare: exactly 2, with detail. list: 2 to 4. bars: 2 to 5. number: empty."}
+      note:{type:"string",description:"title: authors and year. statement: the main on-slide sentence, under 22 words. bars, line and donut: what is measured and the unit. number: what the figure means, under 16 words. Otherwise an optional footnote or an empty string."},
+      items:{type:"array",maxItems:5,items:item,description:"title: 0 or 1 item (icon only). statement: 1 item (icon). icons and flow: 2 to 4. compare: exactly 2, with detail. list: 2 to 4. bars: 2 to 5. line: 2 to 8 points in order, labelled with the time point or condition. donut: 2 to 5 parts of one whole. number: empty."}
     },required:["layout","heading","notes","highlight","note","items"],additionalProperties:false}},
     cautions:cautionsField
   },required:["format","title","authors","slides","cautions"],additionalProperties:false};
@@ -1561,7 +1701,9 @@ Layouts:
 - "flow": 2 to 4 steps joined by arrows, for the procedure or a model such as predictor, mediator and outcome.
 - "compare": two panels side by side, for two groups, two conditions or before and after.
 - "list": 2 to 4 short points with tick marks.
-- "bars": a bar chart of 2 to 5 real figures from the paper.
+- "bars": a bar chart of 2 to 5 real figures from the paper, to compare groups or conditions.
+- "line": a line chart of 2 to 8 real values of one measure from the paper, in order, such as across time points, waves or doses.
+- "donut": a donut chart of 2 to 5 parts of one whole from the paper, as percentages that add up to about 100, such as the make-up of the sample.
 - "number": one big figure from the paper with its meaning in "note".
 Leave fields a layout does not use as an empty string, null or an empty list.
 
@@ -1574,6 +1716,8 @@ function normSceneLike(s,i,what){
   const sc={layout:LAYOUTS.includes(s.layout)?s.layout:"statement",heading:str(s.heading),highlight:str(s.highlight),note:str(s.note),
     items:arr(s.items).map(it=>({icon:str(it&&it.icon),label:str(it&&it.label),detail:str(it&&it.detail),value:(it&&typeof it.value==="number")?it.value:null,display:str(it&&it.display)}))};
   if(sc.layout==="bars"&&sc.items.filter(it=>it.value!=null).length<2) sc.layout="list";
+    if((sc.layout==="line"||sc.layout==="donut")&&numeric(sc.items).length<2) sc.layout=sc.items.length?"list":"statement";
+    if(sc.layout==="donut"&&numeric(sc.items).some(it=>it.value<=0)) sc.layout="bars";
   if(sc.layout==="number"&&!sc.highlight) sc.layout="statement";
   if(sc.layout==="compare"&&sc.items.length<2) sc.layout="list";
   if((sc.layout==="icons"||sc.layout==="flow"||sc.layout==="list")&&!sc.items.length) sc.layout="statement";
@@ -1669,13 +1813,14 @@ function carSchema(N){
       heading:{type:"string",description:"Main slide text, under 10 words."},
       body:{type:"string",description:"Supporting text, under 30 words. Empty string for 'list' and 'chart'."},
       icon:iconField(),
+      chartType:{type:"string",enum:["bar","line","donut"],description:"For 'chart' only: bar to compare groups, line for one measure across time points, donut for parts of one whole. Otherwise 'bar'."},
       highlight:{type:"string",description:"For 'stat' only: the big figure from the paper, at most 6 characters. Otherwise an empty string."},
       items:{type:"array",maxItems:5,description:"list: 2 to 4 points. compare: exactly 2. chart: 2 to 5 bars with values. Otherwise empty.",items:{type:"object",properties:{
         icon:iconField(),label:{type:"string",description:"Under 8 words."},detail:{type:"string",description:"For 'compare' only: under 14 words. Otherwise an empty string."},
         value:{type:["number","null"],description:"For 'chart' only: the figure from the paper. Otherwise null."},
         display:{type:"string",description:"For 'chart' only: the value as shown. Otherwise an empty string."}},
         required:["icon","label","detail","value","display"],additionalProperties:false}}
-    },required:["layout","heading","body","icon","highlight","items"],additionalProperties:false}},
+    },required:["layout","heading","body","icon","chartType","highlight","items"],additionalProperties:false}},
     caption:{type:"string",description:"The post caption: 2 to 4 short sentences that credit the authors and year, ending with a question that invites comments."},
     hashtags:{type:"array",maxItems:10,items:{type:"string"},description:"Up to 10 relevant hashtags without the # sign, mixing broad and specific ones."},
     cautions:cautionsField
@@ -1706,7 +1851,7 @@ Layouts:
 - "list": a heading and 2 to 4 points with tick marks.
 - "stat": one big figure from the paper in "highlight", with what it means in "heading" and "body".
 - "compare": two panels, for two groups, two conditions or before and after.
-- "chart": a bar chart of 2 to 5 real figures from the paper that share one unit, with what is measured in "heading".
+- "chart": a chart of real figures from the paper that share one unit, with what is measured in "heading". Set "chartType" to bar (2 to 5 groups), line (2 to 8 points in order) or donut (2 to 5 parts of one whole).
 - "cta": the takeaway and an invitation to save or share.
 Leave fields a layout does not use as an empty string, null or an empty list.
 
@@ -1720,9 +1865,10 @@ function normCar(o){
   if(!o||typeof o!=="object"||!Array.isArray(o.slides)||!o.slides.length||o.format==="slides") throw new Error("This doesn't look like a carousel reply. Make sure you pasted Claude's reply to the carousel prompt.");
   const slides=o.slides.map(s=>{
     s=s||{};
-    const c={layout:CAR_LAYOUTS.includes(s.layout)?s.layout:"point",heading:str(s.heading),body:str(s.body),icon:str(s.icon),highlight:str(s.highlight).slice(0,8),
+    const c={chartType:["bar","line","donut"].includes(s.chartType)?s.chartType:"bar",layout:CAR_LAYOUTS.includes(s.layout)?s.layout:"point",heading:str(s.heading),body:str(s.body),icon:str(s.icon),highlight:str(s.highlight).slice(0,8),
       items:arr(s.items).map(it=>({icon:str(it&&it.icon),label:str(it&&it.label),detail:str(it&&it.detail),value:(it&&typeof it.value==="number"&&isFinite(it.value))?it.value:null,display:str(it&&it.display)}))};
     if(c.layout==="chart"&&c.items.filter(x=>x.value!=null).length<2) c.layout=c.items.length?"list":"point";
+    if(c.chartType==="donut"&&numeric(c.items).some(x=>x.value<=0)) c.chartType="bar";
     if(c.layout==="stat"&&!c.highlight) c.layout="point";
     if(c.layout==="compare"&&c.items.length<2) c.layout=c.items.length?"list":"point";
     if(c.layout==="list"&&!c.items.length) c.layout="point";
@@ -1736,7 +1882,7 @@ const CW=1080, CH=1350;
 function carTop(b,c){ return 150+markHead(b,c.heading,80,200,70,920); }
 const CAR={
   hook(b,c){
-    const ic=ICONS[c.icon]?c.icon:"question";
+    const ic=hasIcon(c.icon)?c.icon:"question";
     b.icon(ic,CW/2-130,170,260,TEAL);
     const hl=wrap(c.heading,92,900).slice(0,4), y0=640;
     b.text(c.heading,CW/2,y0,{size:92,maxW:900,maxLines:4,anchor:"middle"});
@@ -1746,14 +1892,14 @@ const CAR={
   },
   point(b,c){
     let y=carTop(b,c)+20;
-    if(ICONS[c.icon]){ b.icon(c.icon,CW/2-120,y,240,TEAL); y+=300; } else y+=40;
+    if(hasIcon(c.icon)){ b.icon(c.icon,CW/2-120,y,240,TEAL); y+=300; } else y+=40;
     if(c.body) b.text(c.body,CW/2,y+40,{size:50,maxW:900,maxLines:7,anchor:"middle"});
   },
   list(b,c){
     let y=carTop(b,c)+40;
     const items=c.items.slice(0,4), rowH=Math.min(230,(1150-y)/Math.max(1,items.length));
     items.forEach((it,i)=>{
-      b.icon(ICONS[it.icon]?it.icon:"check",90,y,72,i%2?CORAL:TEAL);
+      b.icon(hasIcon(it.icon)?it.icon:"check",90,y,72,i%2?CORAL:TEAL);
       const h=b.text(it.label,200,y+52,{size:52,maxW:800,maxLines:2});
       if(it.detail) b.text(it.detail,200,y+52+h,{size:32,maxW:800,maxLines:2,color:MUTED});
       y+=rowH;
@@ -1778,6 +1924,12 @@ const CAR={
     });
   },
   chart(b,c){
+    if(c.chartType==="line"||c.chartType==="donut"){
+      const top=carTop(b,c)+40;
+      if(c.chartType==="line"){ chartLine(b,c.items,90,top,900,620,40); if(c.body) b.text(c.body,80,top+700,{size:34,maxW:920,maxLines:3,color:MUTED}); }
+      else { const r=230; chartDonut(b,c.items,CW/2,top+r+10,r,170,top+2*r+110,800,40); }
+      return;
+    }
     const top=carTop(b,c)+50, bars=c.items.filter(x=>x.value!=null).slice(0,5);
     const max=Math.max(1e-9,...bars.map(x=>Math.abs(x.value))), rowH=Math.min(170,(1080-top)/bars.length), bh=rowH*0.5;
     b.stroke("M410 "+(top-20)+"V"+(top+rowH*bars.length-rowH*0.35),{w:4});
@@ -1791,7 +1943,7 @@ const CAR={
     if(c.body) b.text(c.body,80,Math.min(1160,top+rowH*bars.length+40),{size:34,maxW:920,maxLines:2,color:MUTED});
   },
   cta(b,c){
-    b.icon(ICONS[c.icon]?c.icon:"lightbulb",CW/2-110,160,220,TEAL);
+    b.icon(hasIcon(c.icon)?c.icon:"lightbulb",CW/2-110,160,220,TEAL);
     const hl=wrap(c.heading,82,900).slice(0,4), y0=560;
     hl.forEach((ln,i)=>{ const w=textW(ln,82)+30, yy=y0+i*94; b.stroke("M"+(CW/2-w/2)+" "+(yy-18)+"H"+(CW/2+w/2),{color:MARK,w:46,opacity:.75}); });
     b.text(c.heading,CW/2,y0,{size:82,maxW:900,maxLines:4,anchor:"middle"});
