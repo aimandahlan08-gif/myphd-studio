@@ -115,6 +115,16 @@ svg.sketch{display:block;width:100%;height:auto;font-family:var(--sketch)}
 .stagebox:fullscreen svg.sketch{width:min(100vw,177.78vh)}
 .notes{margin:0;font-size:16px;line-height:1.6;white-space:pre-wrap}
 .check-inline{display:flex;gap:8px;align-items:center;font-size:14px;font-weight:500;flex:1 1 100%}
+.opt{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:10px;min-width:0;margin:0}
+.opt legend{font-family:var(--display);font-weight:600;font-size:15px;padding:0 6px}
+.vidtoggle{display:flex;gap:10px;align-items:flex-start;border:1px dashed var(--ink);border-radius:12px;padding:12px 14px;cursor:pointer;background:var(--panel)}
+.vidtoggle input{width:20px;height:20px;margin:2px 0 0;accent-color:var(--ink);flex:none}
+.vidtoggle b{font-family:var(--display);font-weight:600;font-size:16px;display:block}
+.vidtoggle span{font-size:13px;color:var(--muted)}
+.vidtoggle:has(input:checked){border-style:solid;background:var(--yellow-pale,#FFF3B6)}
+.vidtoggle:has(input:checked) span{color:var(--ink)}
+.picker.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media (max-width:760px){.picker.three{grid-template-columns:repeat(1,minmax(0,1fr))}}
 input[type=text]{font:inherit;color:inherit;width:100%;border:1px solid var(--line);border-radius:9px;background:#fff;padding:9px 10px}
 .seg{display:inline-flex;border:1px solid var(--ink);border-radius:12px;overflow:hidden;align-self:flex-start;flex-wrap:wrap}
 .seg button{border:0;border-radius:0;font-weight:600;padding:9px 16px;background:var(--panel)}
@@ -165,21 +175,21 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
 <div class="wrap">
   <header>
     <h1><span>MyPhD</span> Studio</h1>
-    <p>Turn a research paper into a hand-drawn explainer video, infographic, conference slides or Instagram carousel, with Claude writing the content.</p>
+    <p>Turn a research paper or a psychology topic into a hand-drawn infographic, conference slides and an Instagram carousel, with Claude writing the content. Add an explainer video if you want one.</p>
   </header>
 
   <div class="picker" role="radiogroup" aria-label="What to make">
-    <button type="button" role="radio" data-out="video" aria-checked="true"><b>Explainer video</b><span>Narrated, 1 to 10 minutes</span></button>
-    <button type="button" role="radio" data-out="info" aria-checked="false"><b>Infographic</b><span>The whole study on one page</span></button>
+    <button type="button" role="radio" data-out="info" aria-checked="true"><b>Infographic</b><span>The whole study on one page</span></button>
     <button type="button" role="radio" data-out="slides" aria-checked="false"><b>Conference slides</b><span>With speaker notes</span></button>
     <button type="button" role="radio" data-out="carousel" aria-checked="false"><b>Instagram carousel</b><span>6 to 10 slides and a caption</span></button>
+    <button type="button" role="radio" data-out="video" aria-checked="false" id="pickVideo" hidden><b>Explainer video</b><span>Narrated, 1 to 10 minutes</span></button>
   </div>
 
   <div class="cols">
     <!-- Steps -->
     <div class="stack">
       <section class="card" aria-labelledby="s1">
-        <div class="step-head"><span class="num">1</span><h2 id="s1">Add your paper</h2></div>
+        <div class="step-head"><span class="num">1</span><h2 id="s1">Add your paper or topic</h2></div>
         <div class="seg" role="radiogroup" aria-label="Start from" id="srcSeg">
           <button type="button" role="radio" data-src="paper" aria-checked="true">Research paper</button>
           <button type="button" role="radio" data-src="topic" aria-checked="false">Psychology topic</button>
@@ -252,50 +262,57 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
               <option value="students" selected>Students</option>
               <option value="researchers">Researchers</option>
             </select></div>
-          <div class="field" id="lengthField"><label for="length" id="lengthLabel">Length</label>
-            <select id="length">
-              <option value="short">Short (1 min)</option>
-              <option value="standard" selected>Standard (2 min)</option>
-              <option value="deep">Deep dive (3 min)</option>
-              <option value="long">Feature (5 min)</option>
-              <option value="lecture">Mini lecture (10 min)</option>
-            </select></div>
-          <div class="field" id="talkField" hidden><label for="talk">Talk length</label>
-            <select id="talk">
-              <option value="5">5 minutes</option>
-              <option value="10" selected>10 minutes</option>
-              <option value="15">15 minutes</option>
-              <option value="20">20 minutes</option>
-            </select></div>
-          <div class="field" id="carNField" hidden><label for="carN" id="carNLabel">Slides</label>
-            <select id="carN">
-              <option value="6">6 slides</option>
-              <option value="8" selected>8 slides</option>
-              <option value="10">10 slides</option>
-            </select></div>
-          <div class="field"><label for="lang" id="langLabel">Narration language</label>
+          <div class="field"><label for="lang">Language</label>
             <select id="lang">
               <option value="en">English</option>
               <option value="ms">Bahasa Melayu</option>
             </select></div>
         </div>
-        <div class="row" id="slidesOpts" hidden>
-          <div class="field"><label for="presenter">Presenter name (optional)</label>
-            <input type="text" id="presenter" placeholder="Shown on the title slide"></div>
+        <fieldset class="opt"><legend>Conference slides</legend>
+          <div class="row">
+              <div class="field" id="talkField"><label for="talk">Talk length</label>
+                <select id="talk">
+                  <option value="5">5 minutes</option>
+                  <option value="10" selected>10 minutes</option>
+                  <option value="15">15 minutes</option>
+                  <option value="20">20 minutes</option>
+                </select></div>
+            <div class="field"><label for="presenter">Presenter name <span class="hint">(optional)</span></label>
+              <input type="text" id="presenter" placeholder="Shown on the title slide"></div>
+          </div>
           <label class="check-inline" id="authorField"><input type="checkbox" id="isAuthor"> I am one of the authors, so the speaker notes say "we"</label>
-        </div>
-        <div class="row" id="carOpts" hidden>
-          <div class="field"><label for="handle">Your Instagram handle (optional)</label>
-            <input type="text" id="handle" placeholder="@yourhandle"></div>
-        </div>
+        </fieldset>
+        <fieldset class="opt"><legend>Instagram carousel</legend>
+          <div class="row">
+              <div class="field" id="carNField"><label for="carN">Number of slides</label>
+                <select id="carN">
+                  <option value="6">6 slides</option>
+                  <option value="8" selected>8 slides</option>
+                  <option value="10">10 slides</option>
+                </select></div>
+            <div class="field"><label for="handle">Your Instagram handle <span class="hint">(optional)</span></label>
+              <input type="text" id="handle" placeholder="@yourhandle"></div>
+          </div>
+        </fieldset>
+        <label class="vidtoggle" for="wantVideo"><input type="checkbox" id="wantVideo">
+          <div><b>Also make an explainer video</b><span>A narrated, hand-drawn video. It makes Claude's reply longer.</span></div></label>
+        <fieldset class="opt" id="videoOpts" hidden><legend>Explainer video</legend>
+          <div class="row">
+              <div class="field" id="lengthField"><label for="length">Video length</label>
+                <select id="length">
+                  <option value="short">Short (1 min)</option>
+                  <option value="standard" selected>Standard (2 min)</option>
+                  <option value="deep">Deep dive (3 min)</option>
+                  <option value="long">Feature (5 min)</option>
+                  <option value="lecture">Mini lecture (10 min)</option>
+                </select></div>
+          </div>
+          <p class="hint">Pick the voice and play the video in the player once it is made.</p>
+        </fieldset>
       </section>
 
       <section class="card" aria-labelledby="s2">
         <div class="step-head"><span class="num">2</span><h2 id="s2">Copy the prompt into Claude</h2></div>
-        <div class="seg" role="radiogroup" aria-label="What the prompt asks for" id="scopeSeg">
-          <button type="button" role="radio" data-scope="all" aria-checked="true">All four formats</button>
-          <button type="button" role="radio" data-scope="one" aria-checked="false" id="scopeOne">Only the video</button>
-        </div>
         <p class="hint" id="scopeHint"></p>
         <div class="row">
           <button class="primary" id="copyPrompt" type="button">Copy prompt for Claude</button>
@@ -317,7 +334,7 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
         <label for="reply" class="hint">Claude's reply, including the ```json block</label>
         <textarea id="reply" placeholder="Paste Claude's whole reply here."></textarea>
         <div class="row">
-          <button class="primary" id="make" type="button">Make my video</button>
+          <button class="primary" id="make" type="button">Make them</button>
           <button class="quiet" id="loadSample" type="button">Show the example</button>
         </div>
         <p class="status" id="replyStatus" role="status"></p>
@@ -1493,14 +1510,18 @@ function topicize(pr,kind,only){
   return pr;
 }
 /* One prompt for all four formats, like MedTopic Studio: one reply fills the video, infographic, slides and carousel */
-let SCOPE="all";
-const ALL_KINDS=["video","info","slides","carousel"];
+const SCOPE="all";
+const ALL_KINDS=["info","slides","carousel","video"];
+let VIDEO_ON=false;
+const KINDS=()=>VIDEO_ON?ALL_KINDS:ALL_KINDS.filter(k=>k!=="video");
+const NUMW=["zero","one","two","three","four"];
 const ALL_KEYS={video:"video",info:"infographic",slides:"slides",carousel:"carousel"};
 const ALL_NAMES={video:"Explainer video",info:"Infographic",slides:"Conference slides",carousel:"Instagram carousel"};
 function buildAllPrompt(){
   const topic=SRC==="topic", aud="Audience: "+AUDIENCES[$("audience").value];
   let accuracy="";
-  const sections=ALL_KINDS.map(k=>{
+  const kinds=KINDS(), keys=kinds.map(k=>ALL_KEYS[k]), n=NUMW[kinds.length];
+  const sections=kinds.map(k=>{
     let pr=PROMPTS[k](); if(topic) pr=topicize(pr,k,"sections");
     const a=pr.indexOf("Accuracy comes first:"), aEnd=pr.indexOf("\n\n",a);
     if(k==="info") accuracy=pr.slice(a,aEnd);
@@ -1517,24 +1538,29 @@ ${body.trim()}`;
                    .replace("- Always include the main criticism or open question.","- Cover the main criticism or open question in every format.");
   const L=LENGTHS[$("length").value], T=TALKS[+$("talk").value], N=+$("carN").value;
   const metaSch=withMeta({type:"object",properties:{},required:[]});
-  const sch={mode:metaSch.properties.mode,category:metaSch.properties.category,
-    video:schema(L),infographic:infoSchema(),slides:slidesSchema(T),carousel:carSchema(N)};
+  const all={video:()=>schema(L),infographic:infoSchema,slides:()=>slidesSchema(T),carousel:()=>carSchema(N)};
+  const sch={mode:metaSch.properties.mode,category:metaSch.properties.category};
+  keys.forEach(x=>{ sch[x]=all[x](); });
+  const NICE={info:"a one-page infographic",slides:"conference slides",carousel:"an Instagram carousel",video:"an explainer video"};
+  const names=kinds.map(k=>NICE[k]);
+  const nameList=names.slice(0,-1).join(", ")+" and "+names[names.length-1];
+  const keyList=["mode","category"].concat(keys).map(x=>'"'+x+'"'), keyText=keyList.slice(0,-1).join(", ")+" and "+keyList[keyList.length-1];
   let out=`Please write the content for my MyPhD Studio app, following these instructions exactly.
 
-You are the writer for MyPhD Studio, an app that turns ${topic?"a psychology topic":"a research paper"} into four hand-drawn formats: an explainer video, a one-page infographic, conference slides and an Instagram carousel. The app draws every format from fixed hand-drawn layouts, so you only supply the content, as JSON matching the schemas at the end. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
+You are the writer for MyPhD Studio, an app that turns ${topic?"a psychology topic":"a research paper"} into hand-drawn formats. This time I need ${n}: ${nameList}. The app draws every format from fixed hand-drawn layouts, so you only supply the content, as JSON matching the schemas at the end. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
 
 ${accuracy}
 
 ${aud}
 
-Write all four formats. Each one stands on its own, so do not refer from one format to another.
+Write all ${n} formats. Each one stands on its own, so do not refer from one format to another.
 
 ${sections.join("\n\n")}
 
 ${topic?topicSource():paperBlock()}
 
 Reply format:
-Reply with ONE JSON object with exactly six keys: "mode", "category", "video", "infographic", "slides" and "carousel". "mode" and "category" describe the whole piece once. Each of the other four values must match its JSON Schema below. Write the formats in that order and keep each within its own limits, so the reply is not cut off. Put the whole object in a single \`\`\`json code block and write nothing before or after it.
+Reply with ONE JSON object with exactly ${keyList.length} keys: ${keyText}. "mode" and "category" describe the whole piece once. Each of the other ${n} values must match its JSON Schema below. Write the formats in that order and keep each within its own limits, so the reply is not cut off. Put the whole object in a single \`\`\`json code block and write nothing before or after it.
 
 JSON Schemas, one per key (for reference only, do not repeat them in your reply):
 ${JSON.stringify(sch)}`;
@@ -1543,7 +1569,7 @@ ${JSON.stringify(sch)}`;
 }
 function replyWords(){
   const L=LENGTHS[$("length").value];
-  return L.total+(+$("talk").value)*130+700+(+$("carN").value)*35;
+  return (VIDEO_ON?L.total:0)+(+$("talk").value)*130+700+(+$("carN").value)*35;
 }
 function refreshPrompt(){
   const has=hasSource();
@@ -1551,10 +1577,10 @@ function refreshPrompt(){
   $("promptText").value=p;
   $("promptSummary").textContent=has?"See the prompt ("+p.length.toLocaleString()+" characters)":"See the prompt";
   const w=replyWords();
-  $("scopeHint").textContent=SCOPE==="all"
-    ?(w>3600?"Claude's reply will be long, about "+w.toLocaleString()+" words, so it may stop partway. If it does, type \"continue\" in the chat and paste both parts here together. Shorter video and talk lengths keep it in one go."
-             :"One prompt, one reply: Claude writes all four formats together, about "+w.toLocaleString()+" words.")
-    :"Claude writes only the "+OUTS[OUT].name+". Switch to all four to make everything at once.";
+  const nk=NUMW[KINDS().length];
+  $("scopeHint").textContent=w>3600
+    ?"Claude's reply will be long, about "+w.toLocaleString()+" words, so it may stop partway. If it does, type \"continue\" in the chat and paste both parts here together. A shorter "+(VIDEO_ON?"video or talk":"talk")+" keeps it in one go."
+    :"One prompt, one reply: Claude writes all "+nk+" formats together, about "+w.toLocaleString()+" words.";
   return p;
 }
 $("copyPrompt").addEventListener("click",()=>{
@@ -2303,29 +2329,22 @@ const SAMPLE_CAR={format:"carousel",title:"Share your paper four ways",source:"E
 
 /* =========================== Picker and steps =========================== */
 const PROMPTS={video:()=>buildVideoPrompt(),info:buildInfoPrompt,slides:buildSlidesPrompt,carousel:buildCarPrompt};
-function buildPrompt(){
-  if(SCOPE==="all") return buildAllPrompt();
-  const pr=PROMPTS[OUT](); return SRC==="topic"?topicize(pr,OUT):pr;
+function buildPrompt(){ return buildAllPrompt(); }
+function setVideo(on,skipSave){
+  VIDEO_ON=!!on; $("wantVideo").checked=VIDEO_ON;
+  $("videoOpts").hidden=!VIDEO_ON; $("pickVideo").hidden=!VIDEO_ON;
+  document.querySelector(".picker").classList.toggle("three",!VIDEO_ON);
+  if(!skipSave){ try{ localStorage.setItem("myphd.video",VIDEO_ON?"1":"0"); }catch(e){} }
+  setOut(!VIDEO_ON&&OUT==="video"?"info":OUT,skipSave);
 }
-function setScope(k,skipSave){
-  SCOPE=k==="one"?"one":"all";
-  $("scopeSeg").querySelectorAll("button").forEach(bt=>bt.setAttribute("aria-checked",bt.dataset.scope===SCOPE?"true":"false"));
-  if(!skipSave){ try{ localStorage.setItem("myphd.scope",SCOPE); }catch(e){} }
-  setOut(OUT,true);
-}
+$("wantVideo").addEventListener("change",ev=>setVideo(ev.target.checked));
 function setOut(k,skipSave){
-  if(!OUTS[k]) k="video";
+  if(!OUTS[k]||(k==="video"&&!VIDEO_ON)) k="info";
   if(OUT==="video" && k!=="video" && P.playing) pause();
   OUT=k;
   document.querySelectorAll(".picker button").forEach(bt=>bt.setAttribute("aria-checked",bt.dataset.out===k?"true":"false"));
   $("outVideo").hidden=k!=="video"; $("outInfo").hidden=k!=="info"; $("outSlides").hidden=k!=="slides"; $("outCarousel").hidden=k!=="carousel";
-  const all=SCOPE==="all";
-  $("lengthField").hidden=!(all||k==="video"); $("talkField").hidden=!(all||k==="slides"); $("carNField").hidden=!(all||k==="carousel");
-  $("lengthLabel").textContent=all?"Video length":"Length"; $("carNLabel").textContent=all?"Carousel slides":"Slides";
-  $("slidesOpts").hidden=!(all||k==="slides"); $("carOpts").hidden=!(all||k==="carousel");
-  $("langLabel").textContent=(all||k==="video")?"Narration language":"Language";
-  $("make").textContent=all?"Make all four":OUTS[k].make;
-  $("scopeOne").textContent="Only the "+OUTS[k].name;
+  $("make").textContent="Make all "+NUMW[KINDS().length];
   const d=DATA[k];
   showCautions(d&&d.cautions); showCat(d);
   setStatus("replyStatus",""); setStatus("promptStatus","");
@@ -2334,12 +2353,11 @@ function setOut(k,skipSave){
 }
 document.querySelectorAll(".picker button").forEach(bt=>bt.addEventListener("click",()=>setOut(bt.dataset.out)));
 document.querySelector(".picker").addEventListener("keydown",ev=>{
-  const ks=Object.keys(OUTS), i=ks.indexOf(OUT);
+  const ks=KINDS(), i=ks.indexOf(OUT);
   if(ev.key==="ArrowRight"||ev.key==="ArrowDown"){ ev.preventDefault(); setOut(ks[(i+1)%ks.length]); document.querySelector('.picker [data-out="'+OUT+'"]').focus(); }
   if(ev.key==="ArrowLeft"||ev.key==="ArrowUp"){ ev.preventDefault(); setOut(ks[(i+ks.length-1)%ks.length]); document.querySelector('.picker [data-out="'+OUT+'"]').focus(); }
 });
 ["talk","carN","isAuthor","length","audience","lang"].forEach(id=>$(id).addEventListener("change",refreshPrompt));
-$("scopeSeg").querySelectorAll("button").forEach(bt=>bt.addEventListener("click",()=>setScope(bt.dataset.scope)));
 
 function kindOf(o){
   if(o&&o.format==="infographic") return "info";
@@ -2376,7 +2394,8 @@ const SHOW={
 };
 function makeAll(raw){
   const made=[], failed=[];
-  ALL_KINDS.forEach(k=>{
+  if(raw.video&&typeof raw.video==="object"&&!VIDEO_ON) setVideo(true);
+  KINDS().forEach(k=>{
     const part=raw[ALL_KEYS[k]];
     if(!part||typeof part!=="object"){ failed.push(OUTS[k].name); return; }
     try{
@@ -2385,7 +2404,7 @@ function makeAll(raw){
       made.push(k==="video"?"video ("+d.scenes.length+" scenes)":k==="info"?"infographic":k==="slides"?"slides ("+d.slides.length+")":"carousel ("+d.slides.length+" slides)");
     }catch(e){ failed.push(OUTS[k].name); }
   });
-  if(!made.length) throw new Error("None of the four formats could be read. Make sure you pasted Claude's whole reply to the all-four prompt.");
+  if(!made.length) throw new Error("None of the formats could be read. Make sure you pasted Claude's whole reply to the MyPhD Studio prompt.");
   setOut(OUT,true);
   if(DATA.video && $("mode").value==="studio" && $("lang").value!=="ms") studioStart();
   const list=made.length>1?made.slice(0,-1).join(", ")+" and "+made[made.length-1]:made[0];
@@ -2397,6 +2416,7 @@ $("make").addEventListener("click",()=>{
     const raw0=extractJSON($("reply").value);
     if(["video","infographic","slides","carousel"].filter(x=>raw0[x]&&typeof raw0[x]==="object"&&!Array.isArray(raw0[x])).length>=2){ makeAll(raw0); return; }
     const raw=raw0, k=kindOf(raw), d=NORM[k](raw);
+    if(k==="video"&&!VIDEO_ON) setVideo(true);
     if(k!==OUT) setOut(k);
     SHOW[k](d,false); save(k,d); showCautions(d.cautions); showCat(d);
     if(k==="video"){
@@ -2458,12 +2478,9 @@ const sInfo=restore("info"); showInfo(sInfo||SAMPLE_INFO,!sInfo);
 const sSl=restore("slides"); showSlides(sSl||SAMPLE_SLIDES,!sSl);
 const sCar=restore("carousel"); showCarousel(sCar||SAMPLE_CAR,!sCar);
 modeChanged();
-let startOut="video"; try{ startOut=localStorage.getItem("myphd.out")||"video"; }catch(e){}
-setOut(startOut,true);
-let startScope="all"; try{ startScope=localStorage.getItem("myphd.scope")||"all"; }catch(e){}
-SCOPE=startScope==="one"?"one":"all";
-$("scopeSeg").querySelectorAll("button").forEach(bt=>bt.setAttribute("aria-checked",bt.dataset.scope===SCOPE?"true":"false"));
-setOut(OUT,true);
+let startOut="info"; try{ startOut=localStorage.getItem("myphd.out")||"info"; }catch(e){}
+let startVideo=false; try{ startVideo=localStorage.getItem("myphd.video")==="1"; }catch(e){}
+OUT=startOut; setVideo(startVideo,true);
 let startSrc="paper"; try{ startSrc=localStorage.getItem("myphd.src")||"paper"; }catch(e){}
 setSrc(startSrc,true);
 setTheme(startTheme,true);
