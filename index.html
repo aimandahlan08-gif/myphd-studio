@@ -36,15 +36,15 @@
 html,body{margin:0}
 [hidden]{display:none!important}
 body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5}
-.wrap{max-width:1240px;margin:0 auto;padding:20px 16px 48px;display:flex;flex-direction:column;gap:20px}
-header{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 18px;background:var(--ink);color:#fff;border-radius:16px;padding:18px 22px}
-h1{font-family:var(--display);font-weight:800;font-size:clamp(28px,4vw,38px);margin:0;letter-spacing:-.02em;line-height:1.1}
+.wrap{max-width:780px;margin:0 auto;padding:28px 16px 40px;display:flex;flex-direction:column;gap:18px}
+header{display:flex;flex-direction:column;gap:8px;padding:8px 2px 4px}
+h1{font-family:var(--display);font-weight:800;font-size:clamp(34px,7vw,46px);margin:0;letter-spacing:-.02em;line-height:1.1}
 h1 span{background:var(--yellow);color:var(--ink);padding:0 8px;border-radius:6px}
-header p{margin:0;color:#d4d1c7;max-width:62ch}
+header p{margin:0;color:var(--muted);font-size:clamp(16px,2.6vw,19px);max-width:56ch}
 .cols{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);gap:20px;align-items:start}
 @media (max-width:900px){.cols{grid-template-columns:minmax(0,1fr)}}
 .stack{display:flex;flex-direction:column;gap:14px;min-width:0}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0;box-shadow:0 1px 3px rgba(18,18,18,.05)}
 .step-head{display:flex;gap:10px;align-items:center}
 .num{flex:none;width:30px;height:30px;border-radius:50%;background:var(--yellow);color:var(--ink);box-shadow:inset 0 0 0 1.5px var(--ink);font-family:var(--display);font-weight:800;display:grid;place-items:center;font-size:15px}
 h2{font-family:var(--display);font-weight:600;font-size:19px;margin:0;text-wrap:balance}
@@ -94,13 +94,15 @@ progress{width:100%;height:8px;accent-color:var(--amber)}
 .check{display:flex;gap:8px;align-items:flex-start;font-weight:500;font-size:14px}
 .check input{margin-top:3px;accent-color:var(--ink)}
 #voiceProg{height:6px}
-.picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px}
-@media (max-width:760px){.picker{grid-template-columns:repeat(2,minmax(0,1fr))}}
-.picker button{display:flex;flex-direction:column;align-items:flex-start;gap:2px;text-align:left;border-color:var(--line);background:var(--panel);padding:12px 14px;min-width:0}
-.picker button b{font-family:var(--display);font-weight:600;font-size:17px;line-height:1.2}
-.picker button span{font-weight:500;font-size:13px;color:var(--muted)}
-.picker button[aria-checked=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink),0 3px 0 var(--ink);background:var(--yellow)}
-.picker button[aria-checked=true] span{color:var(--ink)}
+.picker{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:4px;background:#efebdf;border-radius:16px;padding:5px}
+.picker.three{grid-template-columns:repeat(3,minmax(0,1fr))}
+.picker button{display:flex;flex-direction:column;align-items:center;gap:6px;border:0;background:transparent;padding:12px 4px;border-radius:12px;min-width:0;color:var(--muted)}
+.picker button:hover{background:rgba(255,255,255,.6)}
+.picker button b{font-family:var(--display);font-weight:600;font-size:clamp(14px,3.4vw,17px);line-height:1.2}
+.picker button[aria-checked=true]{background:#fff;color:var(--ink);box-shadow:0 1px 4px rgba(18,18,18,.12)}
+.tick{width:24px;height:24px;border-radius:50%;border:2px solid #d2ccba;display:grid;place-items:center}
+.picker button.done .tick{border-color:var(--ink);background:var(--yellow)}
+.picker button.done .tick::after{content:"";width:8px;height:12px;border:solid var(--ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
 svg.sketch{display:block;width:100%;height:auto;font-family:var(--sketch)}
 .stylebar{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 16px}
 .stylebar>span{font-weight:600;font-size:14px;margin-right:4px}
@@ -123,8 +125,31 @@ svg.sketch{display:block;width:100%;height:auto;font-family:var(--sketch)}
 .vidtoggle span{font-size:13px;color:var(--muted)}
 .vidtoggle:has(input:checked){border-style:solid;background:var(--yellow-pale,#FFF3B6)}
 .vidtoggle:has(input:checked) span{color:var(--ink)}
-.picker.three{grid-template-columns:repeat(3,minmax(0,1fr))}
-@media (max-width:760px){.picker.three{grid-template-columns:repeat(1,minmax(0,1fr))}}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap}
+#srcSeg{display:grid;grid-template-columns:1fr 1fr;align-self:stretch}
+button.big{width:100%;padding:15px 18px;font-size:17px;border-radius:12px}
+button:disabled,button:disabled:hover{opacity:.4;cursor:not-allowed}
+button.primary:disabled:hover{background:var(--ink)}
+details.more{border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+details.more>summary{cursor:pointer;font-weight:600;font-size:15px}
+details.more[open]>summary{margin-bottom:12px}
+.empty{border:2px dashed #dcd5c2;background:transparent;box-shadow:none;align-items:center;text-align:center;padding:44px 20px;color:#9b9584}
+.empty h2{color:var(--ink);font-size:21px}
+.empty .hint{max-width:40ch}
+.replypanel{background:#fffbea;border-color:#f1e19a}
+ol.steps{list-style:none;counter-reset:st;margin:0;padding:0;display:flex;flex-direction:column;gap:12px;font-size:16px}
+ol.steps li{counter-increment:st;display:grid;grid-template-columns:32px 1fr;gap:12px;align-items:start}
+ol.steps li>span{padding-top:4px}
+.stack>.field{flex:none}
+ol.steps li::before{content:counter(st);width:32px;height:32px;border-radius:50%;background:var(--ink);color:var(--yellow);display:grid;place-items:center;font-weight:800;font-family:var(--display)}
+ol.steps a{color:var(--ink);font-weight:700}
+.biglabel{font-family:var(--display);font-size:19px;font-weight:600}
+.restitle{font-size:clamp(24px,5vw,30px);font-weight:700;margin:8px 2px 0}
+.restitle small{font-family:var(--body);font-weight:500;color:var(--muted);font-size:.7em}
+footer{border-top:1px solid var(--line);padding-top:16px;color:var(--muted);font-size:14px;display:flex;flex-direction:column;align-items:flex-start;gap:6px}
+footer p{margin:0}
+button.linkish{border:0;background:none;padding:0;color:var(--ink);text-decoration:underline;text-decoration-color:var(--yellow);text-decoration-thickness:3px;text-underline-offset:3px;font-weight:700}
+button.linkish:hover{background:none}
 input[type=text]{font:inherit;color:inherit;width:100%;border:1px solid var(--line);border-radius:9px;background:#fff;padding:9px 10px}
 .seg{display:inline-flex;border:1px solid var(--ink);border-radius:12px;overflow:hidden;align-self:flex-start;flex-wrap:wrap}
 .seg button{border:0;border-radius:0;font-weight:600;padding:9px 16px;background:var(--panel)}
@@ -175,25 +200,15 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
 <div class="wrap">
   <header>
     <h1><span>MyPhD</span> Studio</h1>
-    <p>Turn a research paper or a psychology topic into a hand-drawn infographic, conference slides and an Instagram carousel, with Claude writing the content. Add an explainer video if you want one.</p>
+    <p>Turn a research paper or a psychology topic into a hand-drawn infographic, conference slides and an Instagram carousel. Add an explainer video if you like.</p>
   </header>
 
-  <div class="picker" role="radiogroup" aria-label="What to make">
-    <button type="button" role="radio" data-out="info" aria-checked="true"><b>Infographic</b><span>The whole study on one page</span></button>
-    <button type="button" role="radio" data-out="slides" aria-checked="false"><b>Conference slides</b><span>With speaker notes</span></button>
-    <button type="button" role="radio" data-out="carousel" aria-checked="false"><b>Instagram carousel</b><span>6 to 10 slides and a caption</span></button>
-    <button type="button" role="radio" data-out="video" aria-checked="false" id="pickVideo" hidden><b>Explainer video</b><span>Narrated, 1 to 10 minutes</span></button>
-  </div>
-
-  <div class="cols">
-    <!-- Steps -->
-    <div class="stack">
-      <section class="card" aria-labelledby="s1">
-        <div class="step-head"><span class="num">1</span><h2 id="s1">Add your paper or topic</h2></div>
-        <div class="seg" role="radiogroup" aria-label="Start from" id="srcSeg">
-          <button type="button" role="radio" data-src="paper" aria-checked="true">Research paper</button>
-          <button type="button" role="radio" data-src="topic" aria-checked="false">Psychology topic</button>
-        </div>
+  <section class="card main" aria-labelledby="s1">
+    <h2 id="s1" class="sr">Add your paper</h2>
+    <div class="seg" role="radiogroup" aria-label="Start from" id="srcSeg">
+      <button type="button" role="radio" data-src="paper" aria-checked="true">Research paper</button>
+      <button type="button" role="radio" data-src="topic" aria-checked="false">Psychology topic</button>
+    </div>
         <div id="topicSrc" class="stack" hidden>
           <div class="field"><label for="topic">Psychology topic</label>
             <input type="text" id="topic" placeholder="e.g. Cognitive dissonance"></div>
@@ -268,32 +283,37 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
               <option value="ms">Bahasa Melayu</option>
             </select></div>
         </div>
-        <fieldset class="opt"><legend>Conference slides</legend>
-          <div class="row">
-              <div class="field" id="talkField"><label for="talk">Talk length</label>
-                <select id="talk">
-                  <option value="5">5 minutes</option>
-                  <option value="10" selected>10 minutes</option>
-                  <option value="15">15 minutes</option>
-                  <option value="20">20 minutes</option>
-                </select></div>
-            <div class="field"><label for="presenter">Presenter name <span class="hint">(optional)</span></label>
-              <input type="text" id="presenter" placeholder="Shown on the title slide"></div>
-          </div>
-          <label class="check-inline" id="authorField"><input type="checkbox" id="isAuthor"> I am one of the authors, so the speaker notes say "we"</label>
-        </fieldset>
-        <fieldset class="opt"><legend>Instagram carousel</legend>
-          <div class="row">
-              <div class="field" id="carNField"><label for="carN">Number of slides</label>
-                <select id="carN">
-                  <option value="6">6 slides</option>
-                  <option value="8" selected>8 slides</option>
-                  <option value="10">10 slides</option>
-                </select></div>
-            <div class="field"><label for="handle">Your Instagram handle <span class="hint">(optional)</span></label>
-              <input type="text" id="handle" placeholder="@yourhandle"></div>
-          </div>
-        </fieldset>
+    <details class="more">
+      <summary>Slides and carousel options</summary>
+      <div class="stack">
+            <fieldset class="opt"><legend>Conference slides</legend>
+              <div class="row">
+                  <div class="field" id="talkField"><label for="talk">Talk length</label>
+                    <select id="talk">
+                      <option value="5">5 minutes</option>
+                      <option value="10" selected>10 minutes</option>
+                      <option value="15">15 minutes</option>
+                      <option value="20">20 minutes</option>
+                    </select></div>
+                <div class="field"><label for="presenter">Presenter name <span class="hint">(optional)</span></label>
+                  <input type="text" id="presenter" placeholder="Shown on the title slide"></div>
+              </div>
+              <label class="check-inline" id="authorField"><input type="checkbox" id="isAuthor"> I am one of the authors, so the speaker notes say "we"</label>
+            </fieldset>
+            <fieldset class="opt"><legend>Instagram carousel</legend>
+              <div class="row">
+                  <div class="field" id="carNField"><label for="carN">Number of slides</label>
+                    <select id="carN">
+                      <option value="6">6 slides</option>
+                      <option value="8" selected>8 slides</option>
+                      <option value="10">10 slides</option>
+                    </select></div>
+                <div class="field"><label for="handle">Your Instagram handle <span class="hint">(optional)</span></label>
+                  <input type="text" id="handle" placeholder="@yourhandle"></div>
+              </div>
+            </fieldset>
+      </div>
+    </details>
         <label class="vidtoggle" for="wantVideo"><input type="checkbox" id="wantVideo">
           <div><b>Also make an explainer video</b><span>A narrated, hand-drawn video. It makes Claude's reply longer.</span></div></label>
         <fieldset class="opt" id="videoOpts" hidden><legend>Explainer video</legend>
@@ -309,40 +329,41 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
           </div>
           <p class="hint">Pick the voice and play the video in the player once it is made.</p>
         </fieldset>
-      </section>
+    <button class="primary big" id="copyPrompt" type="button">Copy prompt for Claude</button>
+    <p class="hint" id="scopeHint"></p>
+    <p class="status" id="promptStatus" role="status"></p>
+  </section>
 
-      <section class="card" aria-labelledby="s2">
-        <div class="step-head"><span class="num">2</span><h2 id="s2">Copy the prompt into Claude</h2></div>
-        <p class="hint" id="scopeHint"></p>
-        <div class="row">
-          <button class="primary" id="copyPrompt" type="button">Copy prompt for Claude</button>
-        </div>
-        <p class="status" id="promptStatus" role="status"></p>
-        <ol class="how">
-          <li>Open a new chat at <a href="https://claude.ai/new" target="_blank" rel="noopener">claude.ai</a> and paste the prompt.</li>
-          <li>When Claude finishes, copy its whole reply.</li>
-        </ol>
+  <section class="card empty" id="emptyBox" aria-label="Outputs">
+    <svg viewBox="0 0 48 48" width="52" height="52" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linejoin="round"><rect x="6" y="7" width="36" height="13" rx="3"/><rect x="6" y="26" width="16" height="15" rx="3"/><rect x="28" y="26" width="14" height="15" rx="3"/></svg>
+    <h2>Your outputs will appear here</h2>
+    <p class="hint">Infographic, conference slides and Instagram carousel, all from one paper or topic.</p>
+  </section>
+
+  <section class="card replypanel" id="replyPanel" hidden aria-label="Claude's reply">
+    <ol class="steps">
+      <li><span><b>The prompt is copied.</b> Open a new chat at <a href="https://claude.ai/new" target="_blank" rel="noopener">claude.ai</a> and paste it in.</span></li>
+      <li><span>When Claude finishes (it can take a minute), copy its <b>whole reply</b> and paste it below.</span></li>
+    </ol>
         <details id="promptBox">
           <summary id="promptSummary">See the prompt</summary>
           <label for="promptText" class="hint">Prompt for Claude</label>
           <textarea id="promptText" readonly></textarea>
         </details>
-      </section>
+    <label for="reply" class="biglabel">Claude's reply</label>
+    <textarea id="reply" placeholder="Paste Claude's whole reply here, including the ```json block."></textarea>
+    <button class="primary big" id="make" type="button" disabled>Show my outputs</button>
+    <p class="status" id="replyStatus" role="status"></p>
+  </section>
 
-      <section class="card" aria-labelledby="s3">
-        <div class="step-head"><span class="num">3</span><h2 id="s3">Paste Claude's reply</h2></div>
-        <label for="reply" class="hint">Claude's reply, including the ```json block</label>
-        <textarea id="reply" placeholder="Paste Claude's whole reply here."></textarea>
-        <div class="row">
-          <button class="primary" id="make" type="button">Make them</button>
-          <button class="quiet" id="loadSample" type="button">Show the example</button>
-        </div>
-        <p class="status" id="replyStatus" role="status"></p>
-      </section>
+  <section class="stack" id="results" hidden aria-labelledby="resTitle">
+    <h2 class="restitle" id="resTitle"></h2>
+    <div class="picker three" role="radiogroup" aria-label="Output">
+      <button type="button" role="radio" data-out="info" aria-checked="true"><i class="tick" aria-hidden="true"></i><b>Infographic</b></button>
+      <button type="button" role="radio" data-out="slides" aria-checked="false"><i class="tick" aria-hidden="true"></i><b>Slides</b></button>
+      <button type="button" role="radio" data-out="carousel" aria-checked="false"><i class="tick" aria-hidden="true"></i><b>Carousel</b></button>
+      <button type="button" role="radio" data-out="video" aria-checked="false" id="pickVideo" hidden><i class="tick" aria-hidden="true"></i><b>Video</b></button>
     </div>
-
-    <!-- Output -->
-    <div class="stack">
     <section class="card stylebar" role="radiogroup" aria-label="Style for every format" id="styleBar"><span>Style</span></section>
     <section class="card catcard" id="catCard" aria-label="Where this sits in psychology" hidden></section>
     <div class="stack" id="outVideo">
@@ -481,8 +502,12 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
         <h2 id="ch">Check against the paper</h2>
         <ul class="cautions" id="cautions"></ul>
       </section>
-    </div>
-  </div>
+  </section>
+
+  <footer>
+    <p>Content written by Claude from your paper or topic. Check it before you share it.</p>
+    <button class="linkish" id="loadSample" type="button">See an example</button>
+  </footer>
 </div>
 
 <script src="https://cdn.jsdelivr.net/npm/roughjs@4.6.6/bundled/rough.js"></script>
@@ -1585,7 +1610,9 @@ function refreshPrompt(){
 }
 $("copyPrompt").addEventListener("click",()=>{
   if(!hasSource()){ setStatus("promptStatus",SRC==="topic"?"Type a psychology topic in step 1 first.":"Add a PDF or paste the paper's text in step 1 first.","bad"); return; }
-  copyText(refreshPrompt(),"promptStatus","Prompt copied. Paste it into a new Claude chat.","promptBox","promptText");
+  copyText(refreshPrompt(),"promptStatus","Copied.","promptBox","promptText");
+  $("replyPanel").hidden=false; $("emptyBox").hidden=true;
+  $("replyPanel").scrollIntoView({behavior:"smooth",block:"start"});
 });
 
 /* ---------- Step 3: reply ---------- */
@@ -2336,7 +2363,18 @@ function setVideo(on,skipSave){
   document.querySelector(".picker").classList.toggle("three",!VIDEO_ON);
   if(!skipSave){ try{ localStorage.setItem("myphd.video",VIDEO_ON?"1":"0"); }catch(e){} }
   setOut(!VIDEO_ON&&OUT==="video"?"info":OUT,skipSave);
+  const e=$("emptyBox").querySelector(".hint");
+  e.textContent=VIDEO_ON?"Infographic, conference slides, Instagram carousel and explainer video, all from one paper or topic.":"Infographic, conference slides and Instagram carousel, all from one paper or topic.";
 }
+const AUD_SHORT={public:"the general public",students:"students",researchers:"researchers"};
+function isMade(k){ return k==="video"?!!(DATA.video&&!DATA.video.isSample):!!(DATA[k]&&!IS_SAMPLE[k]); }
+function refreshResults(){
+  document.querySelectorAll(".picker button").forEach(bt=>bt.classList.toggle("done",isMade(bt.dataset.out)));
+  const d=[DATA[OUT],DATA.info,DATA.slides,DATA.carousel].find(x=>x&&x.title);
+  const h=$("resTitle"); h.replaceChildren();
+  if(d){ h.append(d.title+" "); const sm=document.createElement("small"); sm.textContent="· for "+AUD_SHORT[$("audience").value]; h.append(sm); }
+}
+function reveal(){ $("results").hidden=false; $("emptyBox").hidden=true; refreshResults(); }
 $("wantVideo").addEventListener("change",ev=>setVideo(ev.target.checked));
 function setOut(k,skipSave){
   if(!OUTS[k]||(k==="video"&&!VIDEO_ON)) k="info";
@@ -2344,7 +2382,7 @@ function setOut(k,skipSave){
   OUT=k;
   document.querySelectorAll(".picker button").forEach(bt=>bt.setAttribute("aria-checked",bt.dataset.out===k?"true":"false"));
   $("outVideo").hidden=k!=="video"; $("outInfo").hidden=k!=="info"; $("outSlides").hidden=k!=="slides"; $("outCarousel").hidden=k!=="carousel";
-  $("make").textContent="Make all "+NUMW[KINDS().length];
+  refreshResults();
   const d=DATA[k];
   showCautions(d&&d.cautions); showCat(d);
   setStatus("replyStatus",""); setStatus("promptStatus","");
@@ -2358,6 +2396,8 @@ document.querySelector(".picker").addEventListener("keydown",ev=>{
   if(ev.key==="ArrowLeft"||ev.key==="ArrowUp"){ ev.preventDefault(); setOut(ks[(i+ks.length-1)%ks.length]); document.querySelector('.picker [data-out="'+OUT+'"]').focus(); }
 });
 ["talk","carN","isAuthor","length","audience","lang"].forEach(id=>$(id).addEventListener("change",refreshPrompt));
+$("audience").addEventListener("change",refreshResults);
+$("reply").addEventListener("input",()=>{ $("make").disabled=!$("reply").value.trim(); });
 
 function kindOf(o){
   if(o&&o.format==="infographic") return "info";
@@ -2406,10 +2446,11 @@ function makeAll(raw){
   });
   if(!made.length) throw new Error("None of the formats could be read. Make sure you pasted Claude's whole reply to the MyPhD Studio prompt.");
   setOut(OUT,true);
-  if(DATA.video && $("mode").value==="studio" && $("lang").value!=="ms") studioStart();
+  reveal();
+  if(made.some(m=>m.startsWith("video")) && $("mode").value==="studio" && $("lang").value!=="ms") studioStart();
   const list=made.length>1?made.slice(0,-1).join(", ")+" and "+made[made.length-1]:made[0];
-  setStatus("replyStatus","Made your "+list+". Switch between them with the buttons at the top."+(failed.length?" Missing: "+failed.join(", ")+". The reply was probably cut off, so ask Claude to \"continue\" and paste both parts together.":""),failed.length?"bad":"ok");
-  document.querySelector(".picker").scrollIntoView({behavior:"smooth",block:"start"});
+  setStatus("replyStatus","Made your "+list+". Switch between them with the tabs below."+(failed.length?" Missing: "+failed.join(", ")+". The reply was probably cut off, so ask Claude to \"continue\" and paste both parts together.":""),failed.length?"bad":"ok");
+  $("results").scrollIntoView({behavior:"smooth",block:"start"});
 }
 $("make").addEventListener("click",()=>{
   try{
@@ -2418,7 +2459,7 @@ $("make").addEventListener("click",()=>{
     const raw=raw0, k=kindOf(raw), d=NORM[k](raw);
     if(k==="video"&&!VIDEO_ON) setVideo(true);
     if(k!==OUT) setOut(k);
-    SHOW[k](d,false); save(k,d); showCautions(d.cautions); showCat(d);
+    SHOW[k](d,false); save(k,d); showCautions(d.cautions); showCat(d); reveal();
     if(k==="video"){
       if($("mode").value==="studio" && $("lang").value!=="ms") studioStart();
       setStatus("replyStatus","Your video has "+d.scenes.length+" scenes. Press Play.","ok");
@@ -2432,9 +2473,10 @@ $("make").addEventListener("click",()=>{
 });
 const SAMPLES={video:SAMPLE,info:SAMPLE_INFO,slides:SAMPLE_SLIDES,carousel:SAMPLE_CAR};
 $("loadSample").addEventListener("click",()=>{
-  if(OUT==="video"){ DATA.video=SAMPLE; loadStory(SAMPLE); } else SHOW[OUT](SAMPLES[OUT],true);
-  showCautions([]);
-  setStatus("replyStatus","Showing the example "+OUTS[OUT].name+".");
+  DATA.video=SAMPLE; loadStory(SAMPLE);
+  showInfo(SAMPLE_INFO,true); showSlides(SAMPLE_SLIDES,true); showCarousel(SAMPLE_CAR,true);
+  showCautions([]); showCat(null); reveal(); setOut(OUT,true);
+  $("results").scrollIntoView({behavior:"smooth",block:"start"});
 });
 
 /* ---------- Style bar ---------- */
@@ -2481,6 +2523,7 @@ modeChanged();
 let startOut="info"; try{ startOut=localStorage.getItem("myphd.out")||"info"; }catch(e){}
 let startVideo=false; try{ startVideo=localStorage.getItem("myphd.video")==="1"; }catch(e){}
 OUT=startOut; setVideo(startVideo,true);
+if(savedVideo||sInfo||sSl||sCar) reveal();
 let startSrc="paper"; try{ startSrc=localStorage.getItem("myphd.src")||"paper"; }catch(e){}
 setSrc(startSrc,true);
 setTheme(startTheme,true);
