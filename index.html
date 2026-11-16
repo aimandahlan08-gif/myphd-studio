@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>MyPhD Studio</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Host+Grotesk:wght@500;600;700;800&family=Architects+Daughter&family=Newsreader:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Host+Grotesk:wght@500;600;700;800&family=Architects+Daughter&family=Newsreader:ital,wght@0,400;0,600;1,400&family=IBM+Plex+Mono:wght@400&family=Lora:ital,wght@0,400;0,600;1,400&display=swap" rel="stylesheet">
 <style>
 /* Layout: one calm column. Input card, then the reply panel, then the outputs. Three styles: Refined Architectural, Vintage Field Journal, Editorial Magazine. */
 :root{
@@ -103,10 +103,12 @@ progress{width:100%;height:8px;accent-color:var(--amber)}
 .picker button.done .tick{border-color:var(--ink);background:var(--yellow)}
 .picker button.done .tick::after{content:"";width:8px;height:12px;border:solid var(--ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
 svg.sketch{display:block;width:100%;height:auto;font-family:var(--sketch)}
-.stylebar{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px 10px;padding:12px 16px}
-.stylebar>span{font-weight:600;font-size:14px;margin-right:4px}
-.stylebar button{display:inline-flex;align-items:center;gap:8px;padding:6px 12px 6px 6px;border-color:var(--line);font-weight:500;font-size:14px;border-radius:99px}
-.stylebar button[aria-checked=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink);background:var(--yellow)}
+.flabel{font-weight:600;font-size:14px}
+.stylebar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+.stylebar button{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:8px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:600;font-size:13px;line-height:1.25;text-align:left}
+.stylebar button svg{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line)}
+.stylebar button[aria-checked=true]{border-color:var(--ink);box-shadow:inset 0 0 0 1px var(--ink)}
+.stylebar button[aria-checked=true] span{background:var(--yellow);border-radius:4px;padding:0 4px;align-self:flex-start}
 .sw{display:inline-grid;place-items:center;width:28px;height:28px;border-radius:50%;border:1px solid rgba(0,0,0,.15);position:relative;overflow:hidden}
 .sw i{position:absolute;width:10px;height:10px;border-radius:50%}
 .sw i:nth-child(1){left:4px;top:9px}.sw i:nth-child(2){right:4px;top:9px}
@@ -312,6 +314,9 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
             </fieldset>
       </div>
     </details>
+        <div class="field"><span class="flabel" id="styleLabel">Style</span>
+          <div class="stylebar" role="radiogroup" aria-labelledby="styleLabel" id="styleBar"></div>
+          <p class="hint">The style shapes the illustration Claude draws, so pick it before you copy the prompt. You can still switch afterwards.</p></div>
         <label class="vidtoggle" for="wantVideo"><input type="checkbox" id="wantVideo">
           <div><b>Also make an explainer video</b><span>A narrated, illustrated video. It makes Claude's reply longer.</span></div></label>
         <fieldset class="opt" id="videoOpts" hidden><legend>Explainer video</legend>
@@ -362,7 +367,6 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
       <button type="button" role="radio" data-out="carousel" aria-checked="false"><i class="tick" aria-hidden="true"></i><b>Carousel</b></button>
       <button type="button" role="radio" data-out="video" aria-checked="false" id="pickVideo" hidden><i class="tick" aria-hidden="true"></i><b>Video</b></button>
     </div>
-    <section class="card stylebar" role="radiogroup" aria-label="Style for every format" id="styleBar"><span>Style</span></section>
     <section class="card catcard" id="catCard" aria-label="Where this sits in psychology" hidden></section>
     <div class="stack" id="outVideo">
       <section class="card" aria-label="Video player">
@@ -607,17 +611,17 @@ const THEMES={
   "refined-architectural":{label:"Refined Architectural",
     bg:"#ffffff",pat:"grid",patC:"#eaeae6",ink:"#1a1a1a",a1:"#1a1a1a",a2:"#dda15e",a2Text:"#8a5a14",mark:"#e9c46a",muted:"#55534e",
     head:"Host Grotesk",headW:600,font:"Architects Daughter",note:"Architects Daughter",
-    lw:.5,fill:"tint",tint:.16,bar:{t:.85,c:1},rule:"band",frame:"none",iconBack:"none",fig:false,
+    lw:.5,fill:"tint",tint:.16,bar:{t:.85,c:1},rule:"band",frame:"none",iconBack:"none",fig:false,align:"center",box:"round",ring:"oval",furn:"pill",
     brief:"neat architect's lettering on faint grid paper, deep black ink, ochre highlights and ruler-straight lines"},
   "vintage-field-journal":{label:"Vintage Field Journal",
     bg:"#f5f0e6",pat:"dots",patC:"#e6dfd1",grain:true,ink:"#26231f",a1:"#4f6354",a2:"#9e472a",mark:"#e3d6bb",muted:"#4a453e",
     head:"Newsreader",headW:600,font:"Newsreader",note:"IBM Plex Mono",noteScale:.82,
-    lw:.45,fill:"stipple",tint:.18,bar:{t:1,c:1},rule:"double",frame:"double",iconBack:"stipple",fig:true,
+    lw:.45,fill:"stipple",tint:.18,bar:{t:1,c:1},rule:"double",frame:"double",iconBack:"stipple",fig:true,align:"center",box:"double",ring:"double",furn:"plate",
     brief:"a 19th-century naturalist's field journal: sepia ink on archival paper, serif type, stippled shading and FIG. labels"},
   "editorial-magazine":{label:"Editorial Magazine",
     bg:"#f7f4ef",pat:"none",patC:"#f7f4ef",ink:"#1e1c1a",a1:"#5a7363",a2:"#b85c46",mark:"#ecdcd2",muted:"#3e3b37",
     head:"Lora",headW:600,font:"Inter",note:"Inter",noteScale:.92,
-    lw:.5,fill:"tint",tint:.2,bar:{t:.85,c:.85},rule:"organic",frame:"none",iconBack:"blob",fig:false,
+    lw:.5,fill:"tint",tint:.2,bar:{t:.85,c:.85},rule:"organic",frame:"none",iconBack:"blob",fig:false,align:"left",headFrac:.74,box:"none",ring:"none",furn:"masthead",
     brief:"a modern magazine explainer: serif headings, clean sans-serif text and terracotta and sage spot illustrations"}
 };
 const THEME_DEFAULT="refined-architectural";
@@ -650,7 +654,7 @@ function paperLayers(w,h){
   return out;
 }
 const pad2=n=>String(n).padStart(2,"0");
-const pageTag=(i,n,sep)=>THEME.fig?"FIG. "+pad2(i+1)+" / "+pad2(n):(i+1)+(sep==null?" / ":sep)+n;
+const pageTag=(i,n,sep)=>THEME.fig?"PLATE "+pad2(i+1)+" OF "+pad2(n):(i+1)+(sep==null?" / ":sep)+n;
 /* Measure text in the style's own font, so wrapping fits whichever font is chosen */
 const mctx=document.createElement("canvas").getContext("2d");
 function measure(str,size,role){ mctx.font=weightOf(role)+" "+size+"px "+fontStack(role); return mctx.measureText(String(str||"")).width; }
@@ -705,6 +709,48 @@ function Board(still){
       if(THEME.rule==="band"){ const r=S("rect",{x:x1,y:y-size*0.36,width:Math.max(4,x2-x1),height:size*0.44,fill:MARK,opacity:.62,class:"fade"});
         r.style.setProperty("--d",t+"s"); shapes.append(r); t+=0.2; return; }
       b.rule(x1,x2,y+size*0.24,size); },
+    /* a panel: rounded box, double hairline plate, or (editorial) no border, just a short accent rule */
+    box(x,y,w,h,color,r){
+      if(THEME.box==="none"){ b.stroke("M"+x+" "+y+"H"+(x+96),{color,w:3,raw:true,step:.15}); return; }
+      if(THEME.box==="double"){ b.stroke(rectPath(x,y,w,h),{color,w:1.4,raw:true,step:.1}); b.stroke(rectPath(x+5,y+5,w-10,h-10),{color,w:.8,raw:true,step:.2}); return; }
+      b.stroke(boxPath(x,y,w,h,r),{color,w:4.5}); },
+    /* the frame around a big number */
+    ring(cx,cy,rx,ry,color,w){
+      if(THEME.ring==="none"){ b.stroke("M"+(cx-rx*0.45)+" "+(cy+ry*0.82)+"H"+(cx+rx*0.45),{color,w:2.4,raw:true,step:.15}); return; }
+      if(THEME.ring==="double"){ b.stroke(ovalPath(cx,cy,rx,ry),{color,w:1.5,raw:true,step:.1}); b.stroke(ovalPath(cx,cy,rx-6,ry-6),{color,w:.8,raw:true}); return; }
+      b.stroke(ovalPath(cx,cy,rx,ry),{color,w:w||4}); },
+    /* Claude's illustration: safe shapes in a 200 x 200 box, inked by the style; the field journal adds leader-line callouts */
+    art(a,x,y,size,o){ o=o||{};
+      if(!a||!a.els||!a.els.length) return false;
+      const s=size/200, grp=S("g",{transform:"translate("+x+" "+y+") scale("+s+")"});
+      a.els.forEach(el=>{
+        const cl=el.cls||"", n=S(el.tag,Object.assign({},el.attrs));
+        n.setAttribute("vector-effect","non-scaling-stroke");
+        if(cl==="hatch"||cl==="stipple"||cl==="fill"){
+          const pat=THEME.fill==="stipple"?(cl==="hatch"?"xhT":cl==="stipple"?"stipC":null):null;
+          n.setAttribute("fill",pat?"url(#"+pat+")":(cl==="fill"?CORAL:TEAL)); if(!pat) n.setAttribute("fill-opacity",cl==="fill"?.16:.14);
+          n.setAttribute("stroke",INK); n.setAttribute("stroke-width",THEME.fill==="stipple"?1.1:1.8);
+          n.setAttribute("class","fade"); n.style.setProperty("--d",t+"s"); t+=0.08;
+        } else {
+          n.setAttribute("fill","none"); n.setAttribute("stroke",cl==="accent"?CORAL:INK);
+          n.setAttribute("stroke-width",THEME.fill==="stipple"?1.3:2); n.setAttribute("pathLength",1); n.setAttribute("class","ink");
+          n.style.setProperty("--d",t+"s"); n.style.setProperty("--dur",".5s"); t+=0.06;
+        }
+        grp.append(n);
+      });
+      shapes.append(grp); t+=0.3;
+      if(THEME.fig&&a.callouts&&a.callouts.length&&o.margin){
+        const fs=o.font||16;
+        a.callouts.slice(0,3).forEach((c,i)=>{
+          const px=x+c.x*s, py=y+c.y*s, left=c.x<100, lx=left?x-o.margin:x+size+o.margin, ly=y+size*(0.22+0.3*i);
+          const ex=left?lx+8:lx-8;
+          b.stroke("M"+ex+" "+ly+"L"+px+" "+py,{color:INK,w:.9,raw:true,step:.1,dur:.4});
+          const ang=Math.atan2(py-ly,px-ex), ah=7;
+          b.stroke("M"+(px-ah*Math.cos(ang-0.4))+" "+(py-ah*Math.sin(ang-0.4))+"L"+px+" "+py+"L"+(px-ah*Math.cos(ang+0.4))+" "+(py-ah*Math.sin(ang+0.4)),{color:INK,w:.9,raw:true,step:.05,dur:.2});
+          b.text(c.label,lx,ly+fs*0.35,{size:fs,anchor:left?"end":"start",italic:true,color:CORAL,role:"body",maxW:fs*16,maxLines:1});
+        });
+      }
+      return true; },
     rule(x1,x2,y,size){
       const k=Math.max(1,(size||46)/46);
       if(THEME.rule==="double"){
@@ -742,21 +788,91 @@ function Board(still){
       const lh=size*1.15;
       let fillC=o.color||INK; if(THEME.a2Text&&fillC===CORAL) fillC=THEME.a2Text;   /* light accents stay readable as text */
       const te=S("text",{x,y,"font-size":size,"text-anchor":o.anchor||"start",fill:fillC,class:"write"});
-      te.style.fontFamily=fontStack(role); te.style.fontWeight=weightOf(role);
+      te.style.fontFamily=fontStack(role); te.style.fontWeight=weightOf(role); if(o.italic) te.style.fontStyle="italic";
+      if(o.spacing) te.setAttribute("letter-spacing",o.spacing);
       use.forEach((ln,i)=>{ te.append(S("tspan",{x,dy:i?lh:0},ln)); });
       te.style.setProperty("--d",t+"s"); texts.append(te); t+=(o.step==null?0.3:o.step);
       return use.length*lh; }
   };
   return b;
 }
+/* the key word a heading underlines in the editorial style: a hinted phrase, or its longest word */
+function keyword(txt,hint){
+  txt=String(txt||""); if(hint&&hint.length>2&&txt.includes(hint)) return hint;
+  return (txt.match(/[A-Za-z\u00C0-\u024F'-]{4,}/g)||[txt.split(" ")[0]]).reduce((a,w)=>w.length>a.length?w:a,"");
+}
+/* a heading set the style's way: centred with a highlight band (architectural), centred over a double rule (journal),
+   or left-aligned in a narrower column with a thin underline on its key word (editorial) */
+function headline(b,txt,x,y,size,maxW,o){
+  o=o||{}; const left=(o.align||THEME.align)==="left";
+  const mw=left?Math.round(maxW*(THEME.headFrac||1)):maxW, ml=o.maxLines||3;
+  const lines=wrap(txt,size,mw,"head").slice(0,ml), lh=size*1.15;
+  const ax=left?x:x+maxW/2, lx=ln=>left?ax:ax-measure(ln,size,"head")/2;
+  const last=lines[lines.length-1]||"", ly=y+(lines.length-1)*lh;
+  if(THEME.rule==="band") b.mark(lx(last)-6,lx(last)+measure(last,size,"head")+6,ly,size);
+  else if(THEME.rule==="organic"){
+    const kw=keyword(txt,o.hint);
+    for(let i=0;i<lines.length;i++){ const k=lines[i].indexOf(kw); if(k<0) continue;
+      const x1=lx(lines[i])+measure(lines[i].slice(0,k),size,"head"); b.rule(x1,x1+measure(kw,size,"head"),y+i*lh+size*0.2,size); break; }
+  } else b.rule(lx(last),lx(last)+measure(last,size,"head"),ly+size*0.24,size);
+  return b.text(txt,ax,y,{size,maxW:mw,maxLines:ml,anchor:left?"start":"middle",role:"head",step:o.step});
+}
 function heading(b,sc){
   if(!sc.heading) return 60;
-  const lines=wrap(sc.heading,46,840,"head").slice(0,2);
-  const w=Math.min(840, measure(lines[lines.length-1],46,"head")+8);
-  b.mark(56,60+w,100+(lines.length-1)*53,46);
-  const h=b.text(sc.heading,60,100,{size:46,maxW:840,maxLines:2,step:.45,role:"head"});
+  const h=headline(b,sc.heading,60,100,46,840,{maxLines:2,step:.45,hint:sc.highlight});
   return 100+h-20;
 }
+/* page furniture: pill tag (architectural), kicker and masthead rule (editorial), catalogue header (journal) */
+let CUR={kicker:"",art:null,i:0,n:1};
+function kickerOf(d){ return String((d&&d.category&&d.category.field)||(d&&d.mode==="topic"?"Psychology explained":"Research explainer")); }
+function furniture(b,W,H,top){
+  const s=Math.round(W*0.0155), k=CUR.kicker.toUpperCase();
+  if(THEME.furn==="pill"){
+    const tw=Math.min(W*0.6,measure(k,s,"head")+s*0.08*k.length), ph=s*1.9, pw=tw+s*2.2, px=W/2-pw/2;
+    b.fill(boxPath(px,top,pw,ph,ph/2),MARK,{});
+    b.stroke(boxPath(px,top,pw,ph,ph/2),{color:INK,w:1.3,raw:true,step:.1});
+    b.text(k,W/2,top+ph/2+s*0.36,{size:s,anchor:"middle",role:"head",spacing:s*0.08,maxW:W*0.6,maxLines:1,step:.1});
+  } else if(THEME.furn==="masthead"){
+    const x=Math.round(W*0.0625);
+    b.text("— "+k,x,top+s,{size:s,role:"head",color:CORAL,spacing:s*0.12,maxW:W*0.7,maxLines:1,step:.1});
+    b.stroke("M"+x+" "+(top+s*1.75)+"H"+(W-x),{color:INK,w:.9,raw:true,step:.1});
+  } else {
+    const m=Math.round(Math.min(W,H)*0.026), x1=m+Math.round(W*0.02), x2=W-x1, yy=m+s*2.1;
+    b.text("FIG. "+pad2(CUR.i+1)+" — ARCHIVAL PLATE",x1,yy,{size:s*0.88,role:"note",color:INK,spacing:s*0.06,step:.1});
+    b.text(k,x2,yy,{size:s*0.88,role:"note",anchor:"end",color:MUTED,maxW:W*0.4,maxLines:1,step:.1});
+    b.stroke("M"+(m+8)+" "+(yy+s*0.8)+"H"+(W-m-8),{color:"#c8bfa8",w:1,raw:true,step:.1});
+  }
+}
+/* Claude's illustration, checked: only plain shapes with geometry, at most 140 of them, inside a 200 x 200 box */
+const ART_TAGS={path:["d"],circle:["cx","cy","r"],ellipse:["cx","cy","rx","ry"],line:["x1","y1","x2","y2"],polyline:["points"],polygon:["points"],rect:["x","y","width","height","rx"]};
+function normArt(a){
+  if(!a||typeof a!=="object"||typeof a.svg!=="string"||!a.svg.trim()) return null;
+  let doc; try{ doc=new DOMParser().parseFromString('<svg xmlns="http://www.w3.org/2000/svg">'+a.svg.slice(0,12000)+"</svg>","image/svg+xml"); }catch(e){ return null; }
+  if(doc.getElementsByTagName("parsererror").length) return null;
+  const els=[];
+  doc.documentElement.querySelectorAll("*").forEach(n=>{
+    const tag=n.localName, allowed=ART_TAGS[tag]; if(!allowed||els.length>=140) return;
+    const attrs={}; let ok=true;
+    allowed.forEach(k=>{ const v=n.getAttribute(k); if(v==null) return;
+      if(k==="d"||k==="points"){ if(!/^[\sMmLlHhVvCcSsQqTtAaZz0-9.,eE+-]*$/.test(v)) ok=false; else attrs[k]=v.slice(0,6000); }
+      else { const f=parseFloat(v); if(isFinite(f)) attrs[k]=String(f); } });
+    if(!ok||!Object.keys(attrs).length) return;
+    const cl=String(n.getAttribute("class")||"").trim().split(/\s+/).find(c=>["accent","fill","hatch","stipple"].includes(c))||"";
+    els.push({tag,attrs,cls:cl});
+  });
+  if(!els.length) return null;
+  const callouts=(Array.isArray(a.callouts)?a.callouts:[]).filter(c=>c&&isFinite(+c.x)&&isFinite(+c.y)&&String(c.label||"").trim())
+    .slice(0,3).map(c=>({x:Math.max(0,Math.min(200,+c.x)),y:Math.max(0,Math.min(200,+c.y)),label:String(c.label).trim().slice(0,32)}));
+  return {els,callouts};
+}
+const SAMPLE_ART_SRC={
+  "refined-architectural":{svg:'<line x1="16" y1="168" x2="186" y2="168"/><circle cx="50" cy="58" r="13"/><line x1="50" y1="71" x2="50" y2="122"/><line x1="50" y1="122" x2="38" y2="166"/><line x1="50" y1="122" x2="62" y2="166"/><line x1="50" y1="86" x2="90" y2="70"/><line x1="50" y1="88" x2="34" y2="110"/><rect x="96" y="28" width="90" height="74" rx="3"/><line x1="106" y1="92" x2="178" y2="92"/><rect x="112" y="70" width="12" height="22"/><rect class="accent" x="132" y="56" width="12" height="36"/><rect x="152" y="42" width="12" height="50"/><line x1="122" y1="102" x2="110" y2="166"/><line x1="160" y1="102" x2="172" y2="166"/>',callouts:[]},
+  "editorial-magazine":{svg:'<circle class="fill" cx="120" cy="86" r="46"/><circle cx="142" cy="116" r="40"/><path d="M58 190C58 154 42 142 46 118C48 100 38 94 42 86C46 78 54 76 52 66C48 42 68 20 96 22C124 24 138 46 134 72C132 92 118 102 110 120C104 136 108 162 114 190"/><path class="accent" d="M150 40C160 34 172 38 176 48"/>',callouts:[]},
+  "vintage-field-journal":{svg:'<path class="hatch" d="M100 26C110 28 128 38 138 56C156 100 138 148 100 178Z"/><ellipse class="stipple" cx="78" cy="98" rx="12" ry="28"/><path d="M100 180C60 150 40 100 60 50C70 30 90 20 100 18C110 20 130 30 140 50C160 100 140 150 100 180Z"/><path d="M100 194L100 22"/><path d="M100 58L76 42M100 58L124 42M100 86L68 68M100 86L132 68M100 116L66 100M100 116L134 100M100 146L76 134M100 146L124 134"/><path d="M100 180C99 188 97 194 93 199"/>',
+    callouts:[{x:100,y:24,label:"fig. a — apex"},{x:72,y:100,label:"fig. b — lamina"},{x:96,y:192,label:"fig. c — petiole"}]}
+};
+const SAMPLE_ART={}; Object.entries(SAMPLE_ART_SRC).forEach(([k,v])=>{ SAMPLE_ART[k]=normArt(v); });
+function artFor(d,isSample){ return isSample?SAMPLE_ART[THEME_KEY]:(d&&d.art)||null; }
 function arrow(b,x1,y,x2){ b.stroke("M"+x1+" "+y+"H"+x2+"M"+(x2-14)+" "+(y-11)+"L"+x2+" "+y+"L"+(x2-14)+" "+(y+11),{color:CORAL,w:4.5,dur:.4,step:.35}); }
 
 /* ---------- Charts shared by every format ---------- */
@@ -803,12 +919,20 @@ function chartDonut(b,items,cx,cy,r,lx,ly,lw,fs){
 const RENDER = {
   title(b,sc){
     const ic=(sc.items[0]&&hasIcon(sc.items[0].icon))?sc.items[0].icon:"graduation";
-    b.icon(ic,420,40,120,TEAL);
+    if(THEME.align==="left"){                   /* editorial: headline left, spot art on the right */
+      if(!b.art(CUR.art,690,90,210)) b.icon(ic,730,130,130,TEAL);
+      const ln=wrap(sc.heading,58,600,"head").slice(0,3).length, y0=260-(ln-1)*34;
+      const h=headline(b,sc.heading,60,y0,58,810,{maxLines:3,step:.5});
+      if(sc.note) b.text(sc.note,60,y0+h+14,{size:28,maxW:580,maxLines:2,color:MUTED});
+      return;
+    }
+    const hasArt=b.art(CUR.art,425,52,110,{margin:34,font:15});
+    if(!hasArt) b.icon(ic,420,40,120,TEAL);
     const lines=wrap(sc.heading,58,820,"head").slice(0,3);
-    const y0=250-(lines.length-1)*20;
+    const y0=(hasArt?240:250)-(lines.length-1)*(hasArt?12:20);
     const h=b.text(sc.heading,480,y0,{size:58,maxW:820,maxLines:3,anchor:"middle",step:.5,role:"head"});
     const uy=y0+h-40;
-    b.rule(330,630,uy,58);
+    if(THEME.rule==="band") b.mark(480-150,480+150,uy-6,30); else b.rule(330,630,uy,58);
     if(sc.note) b.text(sc.note,480,uy+52,{size:30,maxW:800,maxLines:2,anchor:"middle",color:MUTED});
   },
   statement(b,sc){
@@ -887,8 +1011,9 @@ const RENDER = {
 };
 function drawScene(sc, animate){
   const b=Board();
+  CUR={kicker:kickerOf(P.story),art:artFor(P.story,P.story===SAMPLE),i:P.idx||0,n:P.story?P.story.scenes.length:1};
+  furniture(b,960,540,16);
   (RENDER[sc.layout]||RENDER.statement)(b,sc);
-  if(THEME.fig&&P.story) b.text(pageTag(P.idx,P.story.scenes.length),920,40,{size:15,anchor:"end",color:MUTED,step:0});
   b.g.setAttribute("class",animate?"anim":"still");
   $("scene").replaceChildren(b.g);
   return b.time;
@@ -1603,12 +1728,12 @@ ${body.trim()}`;
   const L=LENGTHS[$("length").value], T=TALKS[+$("talk").value], N=+$("carN").value;
   const metaSch=withMeta({type:"object",properties:{},required:[]});
   const all={video:()=>schema(L),infographic:infoSchema,slides:()=>slidesSchema(T),carousel:()=>carSchema(N)};
-  const sch={mode:metaSch.properties.mode,category:metaSch.properties.category};
+  const sch={mode:metaSch.properties.mode,category:metaSch.properties.category,art:artSchema()};
   keys.forEach(x=>{ sch[x]=all[x](); });
   const NICE={info:"a one-page infographic",slides:"conference slides",carousel:"an Instagram carousel",video:"an explainer video"};
   const names=kinds.map(k=>NICE[k]);
   const nameList=names.slice(0,-1).join(", ")+" and "+names[names.length-1];
-  const keyList=["mode","category"].concat(keys).map(x=>'"'+x+'"'), keyText=keyList.slice(0,-1).join(", ")+" and "+keyList[keyList.length-1];
+  const keyList=["mode","category","art"].concat(keys).map(x=>'"'+x+'"'), keyText=keyList.slice(0,-1).join(", ")+" and "+keyList[keyList.length-1];
   let out=`Please write the content for my MyPhD Studio app, following these instructions exactly.
 
 You are the writer for MyPhD Studio, an app that turns ${topic?"a psychology topic":"a research paper"} into illustrated formats. This time I need ${n}: ${nameList}. The app draws every format from fixed illustrated layouts, so you only supply the content, as JSON matching the schemas at the end. Each field's description tells you what belongs in it. Follow those descriptions, including word limits and counts.
@@ -1619,6 +1744,8 @@ ${aud}
 
 The page will draw everything in the "${THEME.label}" style, ${THEME.brief}. Keep the wording calm and scholarly to match, and choose icons that read well as clean, single-weight line art.
 
+${artRules()}
+
 Write all ${n} formats. Each one stands on its own, so do not refer from one format to another.
 
 ${sections.join("\n\n")}
@@ -1626,16 +1753,40 @@ ${sections.join("\n\n")}
 ${topic?topicSource():paperBlock()}
 
 Reply format:
-Reply with ONE JSON object with exactly ${keyList.length} keys: ${keyText}. "mode" and "category" describe the whole piece once. Each of the other ${n} values must match its JSON Schema below. Write the formats in that order and keep each within its own limits, so the reply is not cut off. Put the whole object in a single \`\`\`json code block and write nothing before or after it.
+Reply with ONE JSON object with exactly ${keyList.length} keys: ${keyText}. "mode", "category" and "art" describe the whole piece once. Each of the other ${n} values must match its JSON Schema below. Write the formats in that order and keep each within its own limits, so the reply is not cut off. Put the whole object in a single \`\`\`json code block and write nothing before or after it.
 
 JSON Schemas, one per key (for reference only, do not repeat them in your reply):
 ${JSON.stringify(sch)}`;
   if(topic) out=topicize(out,"info","words");
   return out;
 }
+function artSchema(){
+  return {type:"object",additionalProperties:false,required:["svg","callouts"],properties:{
+    svg:{type:"string",description:"SVG child elements only (no <svg> wrapper), drawn in a 200 by 200 box. Allowed: <path>, <circle>, <ellipse>, <line>, <polyline>, <polygon>, <rect>, with geometry attributes and an optional class. Under 4,000 characters."},
+    callouts:{type:"array",maxItems:3,items:{type:"object",additionalProperties:false,required:["x","y","label"],properties:{
+      x:{type:"number",description:"0 to 200: the point on the drawing the label points at"},y:{type:"number",description:"0 to 200"},
+      label:{type:"string",description:"At most 4 words"}}}}}};
+}
+const ART_RULES={
+  "refined-architectural":`- Draw a tidy, monoline diagram or stick-figure scene, as if with a 0.5 mm fine-liner and a ruler: straight lines, perfect circles, right angles and even spacing.
+- A person is a neat stick figure: a circle head and straight limbs in calm, balanced proportions. Pair it with a simple diagram, chart or object that carries the idea.
+- Put class="accent" on 1 or 2 key elements (they turn ochre). Use 10 to 30 elements. Leave "callouts" empty.`,
+  "editorial-magazine":`- Draw an abstract, single-weight editorial spot illustration in the manner of a magazine explainer: a conceptual metaphor, not a literal scene.
+- Use long, flowing continuous lines (smooth cubic Bézier paths), overlapping circles, a profile silhouette drawn as one line, or interlocking organic shapes.
+- Never draw stick figures, dot-eyed faces, clip-art objects or arrows. Put class="fill" on one shape for a soft spot of colour and class="accent" on at most one line. Use 3 to 10 elements. Leave "callouts" empty.`,
+  "vintage-field-journal":`- Draw an engraved naturalist specimen or scientific diagram, like a plate in a 19th-century monograph: a detailed outline with fine interior detail lines.
+- Shade 2 to 4 regions: class="hatch" for cross-hatching and class="stipple" for dotted shading.
+- Give exactly 2 or 3 callouts. Each x and y is a point on the drawing, and each label is a short annotation in the style "fig. a — amygdala". Spread the points so labels fall on both sides. Use 12 to 40 elements.`
+};
+function artRules(){
+  return `## The illustration ("art")
+Draw one illustration that captures the central idea as a visual metaphor. The page places it on the infographic, the title slide, the first carousel slide${VIDEO_ON?" and the video's title scene":""}, and inks it in the chosen style.
+- Write plain SVG shapes in a 200 by 200 box: <path>, <circle>, <ellipse>, <line>, <polyline>, <polygon> or <rect>, with geometry attributes (d, cx, cy, r, rx, ry, x1, y1, x2, y2, points, x, y, width, height) and an optional class. No fill, stroke, style, transform, text or other attributes; the page sets every colour and line weight.
+${ART_RULES[THEME_KEY]}`;
+}
 function replyWords(){
   const L=LENGTHS[$("length").value];
-  return (VIDEO_ON?L.total:0)+(+$("talk").value)*130+700+(+$("carN").value)*35;
+  return (VIDEO_ON?L.total:0)+(+$("talk").value)*130+700+(+$("carN").value)*35+150;
 }
 function refreshPrompt(){
   const has=hasSource();
@@ -1717,13 +1868,12 @@ function sketchSvg(w,h,label){
 }
 function boxPath(x,y,w,h,r){ r=r||18;
   return "M"+(x+r)+" "+y+"H"+(x+w-r)+"Q"+(x+w)+" "+y+" "+(x+w)+" "+(y+r)+"V"+(y+h-r)+"Q"+(x+w)+" "+(y+h)+" "+(x+w-r)+" "+(y+h)+"H"+(x+r)+"Q"+x+" "+(y+h)+" "+x+" "+(y+h-r)+"V"+(y+r)+"Q"+x+" "+y+" "+(x+r)+" "+y; }
+function rectPath(x,y,w,h){ return "M"+x+" "+y+"H"+(x+w)+"V"+(y+h)+"H"+x+"Z"; }
 function ovalPath(cx,cy,rx,ry){ return "M"+(cx-rx)+" "+cy+"a"+rx+" "+ry+" 0 1 1 "+(2*rx)+" 0a"+rx+" "+ry+" 0 1 1 "+(-2*rx)+" 0"; }
 function lineCount(str,size,maxW,maxLines){ const n=wrap(str,size,maxW).length; return Math.max(1,maxLines?Math.min(n,maxLines):n); }
 function textW(str,size,role){ return measure(str,size,role); }
 function markHead(b,txt,x,y,size,maxW){         /* section heading with the style's emphasis under its first line */
-  const first=wrap(txt,size,maxW,"head")[0]||"";
-  b.mark(x-4,x+Math.min(maxW,textW(first,size,"head")+6),y,size);
-  return b.text(txt,x,y,{size,maxW,maxLines:3,role:"head"});
+  return headline(b,txt,x,y,size,maxW,{maxLines:3});
 }
 
 /* ---------- Image and file export ---------- */
@@ -1741,7 +1891,7 @@ function loadLib(k){
 const blobToDataURL=b=>new Promise((res,rej)=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.onerror=rej; r.readAsDataURL(b); });
 const fontCss={};
 const GFAM={"Architects Daughter":"Architects+Daughter","Host Grotesk":"Host+Grotesk:wght@400;600","Inter":"Inter:wght@400;600",
-  "Newsreader":"Newsreader:wght@400;600","Lora":"Lora:wght@400;600","IBM Plex Mono":"IBM+Plex+Mono:wght@400"};
+  "Newsreader":"Newsreader:ital,wght@0,400;0,600;1,400","Lora":"Lora:ital,wght@0,400;0,600;1,400","IBM Plex Mono":"IBM+Plex+Mono:wght@400"};
 function embeddedFont(){                      /* the style's fonts, inlined so exported images keep them */
   const fams=[...new Set([THEME.head,THEME.font,THEME.note])], key=fams.join("|");
   if(!fontCss[key]) fontCss[key]=(async()=>{
@@ -1879,20 +2029,19 @@ function normInfo(o){
     cautions:arr(o.cautions).map(str).filter(Boolean)};
 }
 function drawInfographic(d){
-  const W=1200, b=Board(true); let y=78;
-  b.text((d.category&&d.category.field?d.category.field+(d.mode==="topic"?" · explained on one page":" · research on one page"):d.mode==="topic"?"Psychology on one page":"Research on one page").toUpperCase(),80,y,{size:24,maxW:1040,maxLines:1,color:TEAL});
-  y+=86;
-  const tLines=wrap(d.title,64,1040,"head").slice(0,3);
-  b.text(d.title,80,y,{size:64,maxW:1040,maxLines:3,role:"head"});
-  y+=(tLines.length-1)*64*1.15;
-  const lastW=Math.min(1040,textW(tLines[tLines.length-1],64,"head"));
-  b.rule(80,82+lastW,y+22,64);
-  y+=66;
-  if(d.citation){ y+=b.text(d.citation,80,y,{size:26,maxW:1040,maxLines:2,color:MUTED}); }
+  const W=1200, b=Board(true); let y=164;
+  CUR={kicker:(d.category&&d.category.field?d.category.field+" · on one page":d.mode==="topic"?"Psychology on one page":"Research on one page"),art:artFor(d,IS_SAMPLE.info),i:0,n:1};
+  furniture(b,W,2400,36);
+  const left=THEME.align==="left", side=left&&CUR.art;
+  const th=headline(b,d.title,80,y,64,1040,{maxLines:3});
+  y+=th-64*1.15+66;
+  if(d.citation){ y+=b.text(d.citation,left?80:600,y,{size:26,maxW:left?760:1040,maxLines:2,color:MUTED,anchor:left?"start":"middle"}); }
   y+=34;
+  if(side){ b.art(CUR.art,860,96,250); y=Math.max(y,380); }
+  else if(CUR.art){ const sz=THEME.fig?300:280; b.art(CUR.art,600-sz/2,y,sz,{margin:60,font:20}); y+=sz+50; }
   /* short answer */
   const aL=lineCount(d.answer,40,760,5), boxH=Math.max(250,96+aL*46+40);
-  b.stroke(boxPath(60,y,1080,boxH,24),{color:TEAL,w:4.5});
+  b.box(60,y,1080,boxH,TEAL,24);
   b.icon(d.heroIcon,100,y+(boxH-170)/2,170,TEAL);
   b.text("The short answer",330,y+66,{size:28,color:TEAL});
   b.text(d.answer,330,y+124,{size:40,maxW:760,maxLines:5});
@@ -1902,14 +2051,14 @@ function drawInfographic(d){
     const n=d.keyStats.length, colW=1080/n;
     d.keyStats.forEach((k,i)=>{
       const cx=60+colW*(i+.5), sz=k.value.length>5?62:84, rx=Math.min(colW/2-20,Math.max(110,textW(k.value,sz,"head")/2+50));
-      b.stroke(ovalPath(cx,y+56,rx,70),{color:i%2?CORAL:TEAL,w:4});
+      b.ring(cx,y+56,rx,70,i%2?CORAL:TEAL,4);
       b.text(k.value,cx,y+56+sz*0.34,{size:sz,anchor:"middle",color:i%2?CORAL:TEAL,role:"head"});
       b.text(k.label,cx,y+172,{size:27,maxW:colW-40,maxLines:2,anchor:"middle"});
     });
     y+=262;
   }
   /* how they did it */
-  y+=markHead(b,d.mode==="topic"?"The big ideas":"How they did it",80,y+30,40,600)+46;
+  y+=markHead(b,d.mode==="topic"?"The big ideas":"How they did it",80,y+30,40,1040)+46;
   const mW=1080/3;
   let mH=0;
   d.method.forEach((m,i)=>{
@@ -1921,7 +2070,7 @@ function drawInfographic(d){
   });
   y+=mH+40;
   /* what they found */
-  y+=markHead(b,d.mode==="topic"?"What the evidence says":"What they found",80,y+30,40,600)+40;
+  y+=markHead(b,d.mode==="topic"?"What the evidence says":"What they found",80,y+30,40,1040)+40;
   d.findings.forEach((f,i)=>{
     if(!b.icon(f.icon,80,y,62,i%2?CORAL:TEAL)) b.numberDot(i+1,111,y+31,28);
     const h=b.text(f.text,176,y+42,{size:32,maxW:940,maxLines:3});
@@ -1931,14 +2080,14 @@ function drawInfographic(d){
   if(d.chart&&d.chart.type==="donut"&&d.chart.bars.some(x=>x.value<=0)) d.chart.type="bar";
   if(d.chart&&d.chart.type&&d.chart.type!=="bar"){
     y+=24;
-    y+=markHead(b,d.chart.title||"In numbers",80,y+30,40,1000)+40;
+    y+=markHead(b,d.chart.title||"In numbers",80,y+30,40,1040)+40;
     if(d.chart.type==="line"){ chartLine(b,d.chart.bars,80,y,1040,380,28); y+=390; }
     else { const r=170; chartDonut(b,d.chart.bars,80+r+20,y+r+10,r,520,y+70,600,30); y+=2*r+50; }
     if(d.chart.note) y+=b.text(d.chart.note,80,y+10,{size:24,maxW:1040,maxLines:2,color:MUTED});
     y+=20;
   } else if(d.chart){
     y+=24;
-    y+=markHead(b,d.chart.title||"In numbers",80,y+30,40,1000)+40;
+    y+=markHead(b,d.chart.title||"In numbers",80,y+30,40,1040)+40;
     const bars=d.chart.bars.slice(0,5), max=Math.max(1e-9,...bars.map(x=>Math.abs(x.value))), bh=40, rowH=74;
     b.stroke("M372 "+(y-10)+"V"+(y+rowH*bars.length-14),{w:3.5});
     bars.forEach((x,i)=>{
@@ -1956,7 +2105,7 @@ function drawInfographic(d){
   if(d.limitation){
     y+=30;
     const lL=lineCount(d.limitation,30,860,4), lH=Math.max(150,96+lL*35);
-    b.stroke(boxPath(60,y,1080,lH,22),{color:CORAL,w:4});
+    b.box(60,y,1080,lH,CORAL,22);
     b.icon("magnifier",96,y+(lH-76)/2,76,CORAL);
     b.text("Keep in mind",210,y+56,{size:30,color:CORAL});
     b.text(d.limitation,210,y+100,{size:30,maxW:880,maxLines:4});
@@ -1964,11 +2113,8 @@ function drawInfographic(d){
   }
   /* takeaway */
   if(d.takeaway){
-    const tk=wrap(d.takeaway,46,1000,"head").slice(0,3);
     y+=30;
-    tk.forEach((ln,i)=>{ const yy=y+i*53, w=textW(ln,46,"head")+16; b.mark(600-w/2,600+w/2,yy,46); });
-    b.text(d.takeaway,600,y,{size:46,maxW:1000,maxLines:3,anchor:"middle",role:"head"});
-    y+=(tk.length-1)*53+70;
+    y+=headline(b,d.takeaway,100,y,46,1000,{maxLines:3})-53+70;
   }
   /* footer */
   b.stroke("M80 "+y+"H1120",{color:MUTED,w:2});
@@ -2097,6 +2243,8 @@ function normSlides(o){
 let SI=0;
 function drawSlide(d,i){
   const sl=d.slides[i], b=Board(true);
+  CUR={kicker:kickerOf(d),art:artFor(d,IS_SAMPLE.slides),i,n:d.slides.length};
+  furniture(b,960,540,16);
   (RENDER[sl.layout]||RENDER.statement)(b,sl);
   const left=(i===0&&$("presenter").value.trim())?"Presented by "+$("presenter").value.trim():(d.authors||catLabel(d));
   if(left) b.text(left,26,528,{size:17,maxW:700,maxLines:1,color:MUTED});
@@ -2247,13 +2395,10 @@ const CW=1080, CH=1350;
 function carTop(b,c){ return 150+markHead(b,c.heading,80,200,70,920); }
 const CAR={
   hook(b,c){
-    const ic=hasIcon(c.icon)?c.icon:"question";
-    b.icon(ic,CW/2-130,170,260,TEAL);
-    const hl=wrap(c.heading,92,900,"head").slice(0,4), y0=640;
-    b.text(c.heading,CW/2,y0,{size:92,maxW:900,maxLines:4,anchor:"middle",role:"head"});
-    const uy=y0+(hl.length-1)*106+34, w=Math.min(800,textW(hl[hl.length-1],92,"head"));
-    b.rule(CW/2-w/2,CW/2+w/2,uy,92);
-    if(c.body) b.text(c.body,CW/2,uy+90,{size:42,maxW:860,maxLines:3,anchor:"middle",color:MUTED});
+    const ic=hasIcon(c.icon)?c.icon:"question", left=THEME.align==="left";
+    if(!(left?b.art(CUR.art,680,150,320):b.art(CUR.art,CW/2-150,150,300,{margin:50,font:24}))) b.icon(ic,left?720:CW/2-130,170,260,TEAL);
+    const y0=640, h=headline(b,c.heading,80,y0,92,920,{maxLines:4}), uy=y0+h-40;
+    if(c.body) b.text(c.body,left?80:CW/2,uy+90,{size:42,maxW:left?720:860,maxLines:3,anchor:left?"start":"middle",color:MUTED});
   },
   point(b,c){
     let y=carTop(b,c)+20;
@@ -2274,14 +2419,14 @@ const CAR={
     const y=carTop(b,c), txt=c.highlight, size=txt.length>4?170:240, cy=Math.max(y+230,560);
     const rx=Math.min(470,Math.max(230,textW(txt,size)/2+90)), ry=size*0.7;
     b.text(txt,CW/2,cy+size*0.34,{size,anchor:"middle",color:TEAL,role:"head"});
-    b.stroke(ovalPath(CW/2,cy,rx,ry),{color:CORAL,w:7});
+    b.ring(CW/2,cy,rx,ry,CORAL,7);
     if(c.body) b.text(c.body,CW/2,cy+ry+100,{size:46,maxW:900,maxLines:5,anchor:"middle"});
   },
   compare(b,c){
     const top=carTop(b,c)+20, gap=36, ph=(1170-top-gap)/2;
     [0,1].forEach(i=>{
       const it=c.items[i]||{}, y=top+i*(ph+gap);
-      b.stroke(boxPath(70,y,940,ph,26),{color:i?CORAL:TEAL,w:5});
+      b.box(70,y,940,ph,i?CORAL:TEAL,26);
       const hasIc=b.icon(it.icon,110,y+(ph-130)/2,130,INK);
       const x=hasIc?280:120, mw=hasIc?690:850;
       const h=b.text(it.label,x,y+ph/2-(it.detail?30:-18),{size:54,maxW:mw,maxLines:2});
@@ -2318,10 +2463,12 @@ const CAR={
 let CI=0;
 function drawCar(d,i){
   const c=d.slides[i], b=Board(true);
+  CUR={kicker:kickerOf(d),art:artFor(d,IS_SAMPLE.carousel),i,n:d.slides.length};
+  furniture(b,CW,CH,24);
   (CAR[c.layout]||CAR.point)(b,c);
   const handle=$("handle").value.trim();
   if(handle) b.text(handle.startsWith("@")?handle:"@"+handle,80,96,{size:34,color:MUTED});
-  b.text(pageTag(i,d.slides.length,"/"),1000,96,{size:34,anchor:"end",color:MUTED});
+  if(THEME.furn!=="plate") b.text(pageTag(i,d.slides.length,"/"),1000,96,{size:34,anchor:"end",color:MUTED});
   const srcLine=d.mode==="topic"?(catLabel(d)||d.source):d.source;
   if(srcLine) b.text(srcLine,80,1290,{size:26,maxW:i<d.slides.length-1?720:920,maxLines:1,color:MUTED});
   if(i<d.slides.length-1){
@@ -2480,7 +2627,7 @@ function makeAll(raw){
     const part=raw[ALL_KEYS[k]];
     if(!part||typeof part!=="object"){ failed.push(OUTS[k].name); return; }
     try{
-      const d=NORM[k](Object.assign({},part,{mode:raw.mode,category:raw.category}));
+      const d=NORM[k](Object.assign({},part,{mode:raw.mode,category:raw.category})); d.art=normArt(raw.art);
       SHOW[k](d,false); save(k,d);
       made.push(k==="video"?"video ("+d.scenes.length+" scenes)":k==="info"?"infographic":k==="slides"?"slides ("+d.slides.length+")":"carousel ("+d.slides.length+" slides)");
     }catch(e){ failed.push(OUTS[k].name); }
@@ -2497,7 +2644,7 @@ $("make").addEventListener("click",()=>{
   try{
     const raw0=extractJSON($("reply").value);
     if(["video","infographic","slides","carousel"].filter(x=>raw0[x]&&typeof raw0[x]==="object"&&!Array.isArray(raw0[x])).length>=2){ makeAll(raw0); return; }
-    const raw=raw0, k=kindOf(raw), d=NORM[k](raw);
+    const raw=raw0, k=kindOf(raw), d=NORM[k](raw); d.art=normArt(raw.art);
     if(k==="video"&&!VIDEO_ON) setVideo(true);
     if(k!==OUT) setOut(k);
     SHOW[k](d,false); save(k,d); showCautions(d.cautions); showCat(d); reveal();
@@ -2537,11 +2684,16 @@ function setTheme(k,skipSave){
   /* draw again once the style's font has arrived, so text wraps to its real width */
   if(document.fonts&&document.fonts.load) Promise.all(["head","body","note"].map(r=>document.fonts.load(weightOf(r)+" 40px \""+famOf(r)+"\""))).then(()=>{ if(THEME_KEY===k) redrawAll(); }).catch(()=>{});
 }
+/* mini thumbnails: grid + pill + stick figure; serif + abstract line; double-bordered plate */
+const THUMBS={
+  "refined-architectural":'<svg viewBox="0 0 120 80" aria-hidden="true"><defs><pattern id="tg" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M8 0H0V8" fill="none" stroke="#eaeae6"/></pattern></defs><rect width="120" height="80" fill="#fff"/><rect width="120" height="80" fill="url(#tg)"/><rect x="40" y="7" width="40" height="10" rx="5" fill="#e9c46a" stroke="#1a1a1a" stroke-width=".8"/><rect x="28" y="23" width="64" height="7" fill="#e9c46a" opacity=".6"/><rect x="30" y="24" width="60" height="4" rx="1" fill="#1a1a1a"/><g fill="none" stroke="#1a1a1a" stroke-width="1.2"><circle cx="48" cy="44" r="4"/><path d="M48 48V60M48 60L44 72M48 60L52 72M48 52L58 47M48 53L43 59"/><rect x="62" y="40" width="22" height="18"/><path d="M66 54V50M71 54V45M76 54V48"/></g></svg>',
+  "editorial-magazine":'<svg viewBox="0 0 120 80" aria-hidden="true"><rect width="120" height="80" fill="#f7f4ef"/><rect x="10" y="9" width="22" height="3" fill="#b85c46"/><path d="M10 15H110" stroke="#1e1c1a" stroke-width=".5"/><text x="10" y="33" font-family="Lora,Georgia,serif" font-size="15" font-weight="600" fill="#1e1c1a">Aa</text><path d="M30 37H48" stroke="#b85c46" stroke-width="1.2"/><rect x="10" y="46" width="44" height="3" rx="1" fill="#3e3b37" opacity=".5"/><rect x="10" y="53" width="36" height="3" rx="1" fill="#3e3b37" opacity=".5"/><circle cx="88" cy="42" r="15" fill="#b85c46" fill-opacity=".16" stroke="#1e1c1a" stroke-width=".9"/><circle cx="96" cy="52" r="13" fill="none" stroke="#1e1c1a" stroke-width=".9"/><path d="M70 74C70 62 66 58 68 50C70 44 74 40 80 40" fill="none" stroke="#1e1c1a" stroke-width=".9"/></svg>',
+  "vintage-field-journal":'<svg viewBox="0 0 120 80" aria-hidden="true"><defs><pattern id="tx" width="4" height="4" patternUnits="userSpaceOnUse"><path d="M0 0L4 4M4 0L0 4" stroke="#4f6354" stroke-width=".4"/></pattern></defs><rect width="120" height="80" fill="#f5f0e6"/><rect x="4" y="4" width="112" height="72" fill="none" stroke="#c8bfa8" stroke-width=".8"/><rect x="7" y="7" width="106" height="66" fill="none" stroke="#dfd8c8" stroke-width=".6"/><text x="11" y="15" font-family="IBM Plex Mono,monospace" font-size="5" fill="#26231f">FIG. 01 — PLATE</text><path d="M60 22C50 30 46 44 52 58C55 64 58 66 60 68C62 66 65 64 68 58C74 44 70 30 60 22Z" fill="url(#tx)" stroke="#26231f" stroke-width=".8"/><path d="M60 24V72M60 38L53 33M60 38L67 33M60 50L51 44M60 50L69 44" fill="none" stroke="#26231f" stroke-width=".5"/><path d="M68 40L86 34M53 54L34 60" fill="none" stroke="#26231f" stroke-width=".4"/><text x="87" y="35" font-family="Newsreader,Georgia,serif" font-style="italic" font-size="5.5" fill="#9e472a">fig. a</text><text x="17" y="62" font-family="Newsreader,Georgia,serif" font-style="italic" font-size="5.5" fill="#9e472a">fig. b</text></svg>'
+};
 Object.entries(THEMES).forEach(([k,t])=>{
   const bt=document.createElement("button"); bt.type="button"; bt.setAttribute("role","radio"); bt.dataset.theme=k;
-  const sw=document.createElement("span"); sw.className="sw"; sw.style.background=t.bg;
-  const i1=document.createElement("i"), i2=document.createElement("i"); i1.style.background=t.a1; i2.style.background=t.a2; sw.append(i1,i2);
-  bt.append(sw,document.createTextNode(t.label));
+  const th=document.createElement("div"); th.innerHTML=THUMBS[k]; const lb=document.createElement("span"); lb.textContent=t.label;
+  bt.append(th.firstChild,lb);
   bt.addEventListener("click",()=>setTheme(k));
   $("styleBar").append(bt);
 });
