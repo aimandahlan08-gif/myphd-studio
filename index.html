@@ -252,16 +252,9 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
           <div><b>Also make an explainer video</b><span>A narrated, illustrated video. It makes Claude's reply longer.</span></div></label>
         <fieldset class="opt" id="videoOpts" hidden><legend>Explainer video</legend>
           <div class="row">
-              <div class="field" id="lengthField"><label for="length">Video length</label>
-                <select id="length">
-                  <option value="short">Short (1 min)</option>
-                  <option value="standard" selected>Standard (2 min)</option>
-                  <option value="deep">Deep dive (3 min)</option>
-                  <option value="long">Feature (5 min)</option>
-                  <option value="lecture">Mini lecture (10 min)</option>
-                </select></div>
+              <input type="hidden" id="length" value="youtube">
           </div>
-          <p class="hint">Pick the voice and play the video in the player once it is made.</p>
+          <p class="hint">About 10 minutes (34 to 40 scenes), paced for YouTube. Pick the voice and music, play it, and download the MP4 or a Shorts teaser once it is made.</p>
         </fieldset>
     <button class="primary big" id="copyPrompt" type="button">Copy prompt for Claude</button>
     <p class="hint" id="scopeHint"></p>
@@ -324,12 +317,14 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
         </div>
         <div class="controls">
           <button class="primary" id="vMp4" type="button">Download MP4</button>
+          <button class="quiet" id="vShorts" type="button">Download Shorts teaser (vertical)</button>
         </div>
         <p class="status" id="playStatus" role="status"></p>
       </section>
 
       <section class="card" aria-labelledby="vh">
         <h2 id="vh">Voice</h2>
+        <label class="check-inline"><input type="checkbox" id="music" checked> Soft background music under the voice (also in downloads)</label>
         <div class="row">
           <div class="field"><label for="mode">Narration</label>
             <select id="mode">
@@ -959,6 +954,50 @@ const RENDER = {
     if(sc.note) b.text(sc.note,480,cy+ry+56,{size:32,maxW:780,maxLines:3,anchor:"middle"});
   }
 };
+/* Reveal beats: the scene's elements, grouped by when they start drawing */
+function revealBeats(root){
+  const items=[...root.querySelectorAll("*")].filter(e=>e.style&&e.style.getPropertyValue("--d")!=="")
+    .map(e=>({e,d:parseFloat(e.style.getPropertyValue("--d"))||0})).sort((a,b)=>a.d-b.d);
+  const beats=[]; items.forEach(it=>{ const l=beats[beats.length-1]; if(l&&it.d-l.d0<0.55) l.items.push(it); else beats.push({d0:it.d,items:[it]}); });
+  return beats;
+}
+/* Spread the beats across the narration so something new appears every few seconds.
+   The opening beats (furniture, heading, the title illustration) keep their quick timing. */
+function stretchReveal(root,dur){
+  const beats=revealBeats(root), H=1.3;
+  beats.forEach(b=>b.t=b.d0);
+  const late=beats.filter(b=>b.d0>H); if(!late.length||!(dur>0)) return beats;
+  const a=late[0].d0, end=Math.max(late[late.length-1].d0, Math.min(dur*0.72,dur-1.5));
+  late.forEach((b,k)=>{ const nd=late.length===1?a:Math.max(b.d0,a+(end-a)*k/(late.length-1)), sh=nd-b.d0; b.t=nd;
+    if(sh>0.01) b.items.forEach(it=>it.e.style.setProperty("--d",(it.d+sh).toFixed(2)+"s")); });
+  return beats;
+}
+/* A soft, procedural marimba-and-pad loop, mixed at about -29 dB under the voice */
+const MUSIC_DB=-29;
+function musicBed(ctx,out){
+  const lvl=Math.pow(10,MUSIC_DB/20), master=ctx.createGain(), t0=ctx.currentTime;
+  master.gain.setValueAtTime(0,t0); master.gain.linearRampToValueAtTime(lvl,t0+2); master.connect(out);
+  const lp=ctx.createBiquadFilter(); lp.type="lowpass"; lp.frequency.value=1500; lp.connect(master);
+  const hz=m=>440*Math.pow(2,(m-69)/12), BAR=4;
+  const chords=[[48,55,64,71],[45,52,60,67],[41,48,57,64],[43,50,59,62]], pent=[60,62,64,67,69,72,74,76];
+  const pat=[0,2,4,1,3,1,5,2];
+  let next=t0+0.1, bar=0, stopped=false;
+  const pad=(t,ch)=>ch.forEach((m,i)=>{ const o=ctx.createOscillator(), g=ctx.createGain();
+    o.type=i?"sine":"triangle"; o.frequency.value=hz(m); o.detune.value=i%2?5:-5;
+    g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(0.16,t+1.4); g.gain.setValueAtTime(0.16,t+BAR-0.5); g.gain.linearRampToValueAtTime(0,t+BAR+0.9);
+    o.connect(g); g.connect(lp); o.start(t); o.stop(t+BAR+1); });
+  const mallet=(t,m,v)=>{ const o=ctx.createOscillator(), o2=ctx.createOscillator(), g=ctx.createGain(), g2=ctx.createGain();
+    o.frequency.value=hz(m); o2.frequency.value=hz(m)*4; g2.gain.value=0.22;
+    g.gain.setValueAtTime(0.0001,t); g.gain.linearRampToValueAtTime(v,t+0.008); g.gain.exponentialRampToValueAtTime(0.0005,t+1.1);
+    o.connect(g); o2.connect(g2); g2.connect(g); g.connect(lp); o.start(t); o2.start(t); o.stop(t+1.2); o2.stop(t+1.2); };
+  const schedule=()=>{ while(!stopped&&next<ctx.currentTime+1.5){ pad(next,chords[bar%4]);
+      for(let k=0;k<8;k++){ if((k+bar)%3===2) continue; mallet(next+k*0.5,pent[(pat[k]+bar*2)%pent.length],0.3); }
+      next+=BAR; bar++; } };
+  schedule(); const timer=setInterval(schedule,300);
+  return { stop(fade){ if(stopped) return; stopped=true; clearInterval(timer); fade=fade==null?1.5:fade;
+    const t=ctx.currentTime; master.gain.cancelScheduledValues(t); master.gain.setValueAtTime(master.gain.value,t); master.gain.linearRampToValueAtTime(0,t+fade);
+    setTimeout(()=>{ try{ master.disconnect(); }catch(e){} },(fade+6)*1000); } };
+}
 function drawScene(sc, animate){
   const b=Board();
   CUR={kicker:kickerOf(P.story),art:artFor(P.story,P.story===SAMPLE),i:P.idx||0,n:P.story?P.story.scenes.length:1};
@@ -1208,7 +1247,9 @@ function updateUI(){
 }
 function showStill(i){ P.idx=i; drawScene(P.story.scenes[i],false); $("stagebox").classList.remove("paused"); updateUI(); }
 function stopSpeech(){ P.token++; if(synth){ try{ synth.cancel(); }catch(e){} } }
-function stopAll(){ P.playing=false; P.waiting=false; stopSpeech(); stopStudio(); try{ audio.pause(); }catch(e){} }
+function stopAll(){ P.playing=false; P.waiting=false; stopSpeech(); stopStudio(); try{ audio.pause(); }catch(e){} musicOff(); }
+function musicOn(){ musicOff(); if(!$("music").checked) return; const ctx=ensureCtx(); if(ctx) P.music=musicBed(ctx,ctx.destination); }
+function musicOff(fade){ if(P.music){ P.music.stop(fade); P.music=null; } }
 
 function startScene(i, seek){
   const sc=P.story.scenes[i];
@@ -1217,6 +1258,8 @@ function startScene(i, seek){
   $("stagebox").classList.remove("paused");
   P.minMs=(drawT+0.8)*1000;
   P.estMs=Math.max(P.minMs, words(sc.narration)/2.5*1000/Number($("rate").value)+900);
+  const clip=mode()==="studio"&&ST.cache.get(studioKey(i));
+  stretchReveal($("scene"),clip?clip.audio.length/clip.sr:P.estMs/1000);
   P.sents=splitSentences(sc.narration); P.sentIdx=0; P.waiting=false;
   stopSpeech(); stopStudio();
   const m=mode();
@@ -1267,7 +1310,7 @@ function tick(now){
     }
   } else {
     if(m==="none" && P.elapsed>=P.estMs) P.narrDone=true;
-    if(P.narrDone && P.elapsed>=P.minMs){ P.gap+=dt; if(P.gap>=500) advance=true; }
+    if(P.narrDone && P.elapsed>=P.minMs){ P.gap+=dt; if(P.gap>=(P.idx+1<n?250:1750)) advance=true; }
   }
   if(advance){
     if(P.idx+1<n) startScene(P.idx+1,false);
@@ -1275,11 +1318,11 @@ function tick(now){
   }
   requestAnimationFrame(tick);
 }
-function finish(){ stopAll(); $("prog").value=1; $("play").textContent="Play again"; }
+function finish(){ musicOff(1.5); stopAll(); $("prog").value=1; $("play").textContent="Play again"; }
 function play(){
   if(P.playing) return;
   const atEnd=$("play").textContent==="Play again";
-  P.playing=true; P.last=performance.now();
+  P.playing=true; P.last=performance.now(); musicOn();
   const resuming=$("stagebox").classList.contains("paused");
   if(resuming && !atEnd){
     const m=mode();
@@ -1295,7 +1338,7 @@ function play(){
 }
 function pause(){
   if(!P.playing) return;
-  P.playing=false; stopSpeech(); try{ audio.pause(); }catch(e){}
+  P.playing=false; stopSpeech(); try{ audio.pause(); }catch(e){} musicOff(0.4);
   if(actx && actx.state==="running") actx.suspend().catch(()=>{});
   $("stagebox").classList.add("paused"); updateUI();
 }
@@ -1438,7 +1481,8 @@ const LENGTHS={
   standard:{label:"about 2 minutes",min:7,max:9,total:300},
   deep:{label:"about 3 minutes",min:10,max:12,total:450},
   long:{label:"about 5 minutes",min:16,max:20,total:750,extended:true},
-  lecture:{label:"about 10 minutes",min:30,max:36,total:1500,extended:true}
+  lecture:{label:"about 10 minutes",min:30,max:36,total:1500,extended:true},
+  youtube:{label:"about 10 minutes",min:34,max:40,total:1550,range:"1,450 to 1,650",extended:true,yt:true}
 };
 function schema(L){
   const item={type:"object",properties:{
@@ -1460,7 +1504,7 @@ function schema(L){
   return {type:"object",properties:{
     title:{type:"string",description:"The video's title, under 12 words: the question the video answers, or a promise of its answer. Not the paper's own title."},
     authors:{type:"string",description:"Authors and year as given in the paper, e.g. 'Lee & Tan (2023)'. Empty string if not stated."},
-    scenes:{type:"array",minItems:L.extended?Math.floor(L.min/2):L.min,maxItems:L.max,items:scene},
+    scenes:{type:"array",minItems:L.yt?L.min:L.extended?Math.floor(L.min/2):L.min,maxItems:L.max,items:scene},
     cautions:{type:"array",items:{type:"string"},description:"Anything simplified, uncertain or unclear in the text that the user should check against the paper. Can be empty."}
   },required:["title","authors","scenes","cautions"],additionalProperties:false};
 }
@@ -1502,14 +1546,23 @@ Craft:
 - Once in the video, where it fits naturally, picture a moment from a viewer's everyday life to show why the finding matters. Introduce it with words such as "Picture" or "Imagine" so it can never be mistaken for a participant or a result, and leave it out if it would make the topic seem trivial.
 - Start each scene by speaking to what the drawing shows, in the order it appears on screen, from left to right.
 
-Narration:
-- In total about ${L.total} words, in ${lang}, which is about 150 words a minute. Give words where the weight is: the hook and links are short, the main finding gets the longest scene, the method stays brief. No scene goes over 55 words.
+${L.yt?`Depth (this is a 10-minute video, so earn the length with substance, never with filler):
+- An extended setup: the history of the question or the earlier experiments that led to it, told as a story, over several scenes.
+- At least two empirical studies or replications with concrete method details: who took part, how many, what they did and what was measured.
+- A dedicated multi-perspective breakdown: how two or more schools of thought or competing explanations read the evidence, each in its own scene.
+- An everyday-life scenario, introduced with "Picture" or "Imagine".
+- The methodological limitations, then two or three actionable takeaways the viewer can use.
+- Every scene still moves the story forward. If the material runs thin, go deeper into method and evidence rather than repeating points.
+
+`:""}Narration:
+- In total ${L.range?L.range+" spoken words":"about "+L.total+" words"}, in ${lang}, which is about 150 words a minute. Give words where the weight is: the hook and links are short, the main finding gets the longest scene, the method stays brief. No scene goes over 55 words.
 - Write for the ear: plain words, one idea per sentence, and no more than three items listed in one sentence. No brackets, citations or symbols.
 - Never read statistical notation aloud, such as r, beta, p values, confidence intervals or odds ratios. Say what the figure means, in words that match the authors' own interpretation, for example "a moderate link" or "about twice as likely", and put the exact figure on screen. Simple counts and percentages may be spoken.
 - Sound like a good lecturer explaining the study to a curious friend: confident, warm, and specific. Vary the sentence length and let the main finding land in a short sentence of its own. Build interest through the content itself, not through stock phrases. Avoid openers and catchphrases such as "welcome to", "in this video", "let's dive in", "here's the twist" and "game-changer".
 - Punctuate for the voice: a question mark where a speaker's voice would rise, full stops where a speaker would pause, and at most one exclamation mark in the whole video. The tone must never overstate the findings.
 - Choose each scene's "mood" to fit what it says, and vary the moods across the video so the delivery does not stay flat.
 - Write numbers so they can be read aloud naturally, and explain any abbreviation the first time.
+- Pronunciation: a speech synthesiser reads "narration". Whenever it contains an uncommon researcher surname or technical term the voice may get wrong, write it in "narration" as a simple hyphenated phonetic spelling, for example Mischel as "Mih-shell", Palmeri as "Pahl-mer-ee", Quan as "Kwahn". Keep the standard academic spelling in "heading", "note" and "items". Leave common words alone.
 - The narration must make sense without the picture. On-screen text is short and supports the narration without repeating it word for word. On-screen text is also in ${lang}.
 
 Audience: ${AUDIENCES[$("audience").value]}
@@ -2509,61 +2562,131 @@ function recMime(){
   const R=window.MediaRecorder; if(!R) return "";
   return ["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4;codecs=avc1,mp4a","video/mp4","video/webm;codecs=vp9,opus","video/webm"].find(m=>R.isTypeSupported(m))||"";
 }
-async function studioAll(statusId){              /* the studio voice for every scene, or null if it cannot run here */
+async function studioAll(statusId,which){       /* studio-voice clips for the given scenes, or null if it cannot run here */
   if($("mode").value!=="studio") return null;
   studioStart();
   const t0=Date.now();
   while(ST.status!=="ready"){ if(ST.status==="failed"||Date.now()-t0>600000) return null; setStatus(statusId,"Loading the studio voice for the narration…"); await new Promise(r=>setTimeout(r,500)); }
-  const n=P.story.scenes.length, keys=[...Array(n).keys()].map(studioKey);
+  const keys=which.map(studioKey);
   while(keys.some(k=>!ST.cache.has(k))){
     if(ST.status==="failed") return null;
-    setStatus(statusId,"Preparing the narration: scene "+(keys.filter(k=>ST.cache.has(k)).length+1)+" of "+n+"…");
-    pumpStudio(); await new Promise(r=>setTimeout(r,300));
+    const k=keys.find(x=>!ST.cache.has(x));
+    setStatus(statusId,"Preparing the narration: "+(keys.filter(x=>ST.cache.has(x)).length+1)+" of "+keys.length+"…");
+    if(!ST.busy){ const i=which[keys.indexOf(k)]; ST.busy=k; ST.worker.postMessage({type:"gen",key:k,voice:$("studioVoice").value,sentences:studioSentences(i)}); }
+    await new Promise(r=>setTimeout(r,250));
   }
   return keys.map(k=>ST.cache.get(k));
 }
+/* one scene as a series of images, one per reveal beat, timed to its narration */
+async function sceneFrames(story,i,dur){
+  P.idx=i; drawScene(story.scenes[i],false);
+  const beats=stretchReveal($("scene"),dur), out=[];
+  for(let k=0;k<beats.length;k++){
+    if(k+1<beats.length&&beats[k+1].t-beats[k].t<0.4) continue;
+    beats.forEach((b,j)=>b.items.forEach(it=>it.e.style.opacity=j<=k?"":"0"));
+    const st=$("stage").cloneNode(true); st.setAttribute("width",960); st.setAttribute("height",540);
+    out.push({t:k===0?0:beats[k].t,img:await svgToImg(st)});
+  }
+  if(!out.length){ const st=$("stage").cloneNode(true); st.setAttribute("width",960); st.setAttribute("height",540); out.push({t:0,img:await svgToImg(st)}); }
+  return out;
+}
+const clipDur=(c,last)=>c.audio.length/c.sr+0.1+(last?1.75:0.25);   /* scene ends with its voice: 0.25 s breath, 1.75 s after the final word */
+const easeOut=x=>1-Math.pow(1-Math.max(0,Math.min(1,x)),3);
+/* the frame of segment si at time t: eased fade from the previous beat (or the previous segment's last beat) */
+function frameAt(segs,si,t){
+  const fr=segs[si].frames; let f=0; while(f+1<fr.length&&fr[f+1].t<=t) f++;
+  const prev=f>0?fr[f-1].img:si>0?segs[si-1].frames[segs[si-1].frames.length-1].img:null;
+  return {img:fr[f].img,prev,a:prev?easeOut((t-fr[f].t)/0.4):1};
+}
+async function recordSegments(o){                /* o: {W,H,segs,paint,name,statusId} */
+  const mime=recMime(); if(!mime) throw new Error("this browser cannot record video. Try Chrome, Edge or Safari on a computer");
+  const cv=document.createElement("canvas"); cv.width=o.W; cv.height=o.H; const g=cv.getContext("2d");
+  o.paint(g,0,0);
+  const stream=cv.captureStream(30), withAudio=o.segs.some(x=>x.clip), ctx=(withAudio||$("music").checked)?ensureCtx():null;
+  let dest=null, bed=null;
+  if(ctx){ dest=ctx.createMediaStreamDestination(); dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t)); if($("music").checked) bed=musicBed(ctx,dest); }
+  const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:o.H>1000?6e6:4e6}), parts=[];
+  rec.ondataavailable=e=>{ if(e.data&&e.data.size) parts.push(e.data); };
+  const stopped=new Promise(r=>rec.onstop=r);
+  rec.start(1000);
+  for(let si=0;si<o.segs.length;si++){
+    const sg=o.segs[si], last=si===o.segs.length-1;
+    if(sg.clip&&dest){ const buf=ctx.createBuffer(1,sg.clip.audio.length,sg.clip.sr); buf.copyToChannel(sg.clip.audio,0);
+      const sr=ctx.createBufferSource(); sr.buffer=buf; sr.connect(dest); sr.start(ctx.currentTime+0.1); if(sg.cut) sr.stop(ctx.currentTime+sg.dur); }
+    setStatus(o.statusId,"Recording "+(si+1)+" of "+o.segs.length+". Keep this tab open.");
+    const t0=performance.now(); let faded=false;
+    await new Promise(res=>{ const iv=setInterval(()=>{ const t=(performance.now()-t0)/1000; o.paint(g,si,t);
+      if(last&&bed&&!faded&&t>=sg.dur-1.5){ faded=true; bed.stop(1.5); }
+      if(t>=sg.dur){ clearInterval(iv); res(); } },33); });
+  }
+  if(bed) bed.stop(0.05);
+  rec.stop(); await stopped;
+  const mp4=mime.startsWith("video/mp4");
+  download(new Blob(parts,{type:mime.split(";")[0]}),o.name+"."+(mp4?"mp4":"webm"));
+  return {mp4,withAudio};
+}
+const silentDur=(sc,last)=>Math.max(4,String(sc.narration||"").split(/\s+/).length/150*60)+(last?1.75:0.25);
 let RECORDING=false;
-$("vMp4").addEventListener("click",ev=>busy(ev.currentTarget,"playStatus","Recording…",async()=>{
-  if(RECORDING) return; const mime=recMime();
-  if(!mime) throw new Error("this browser cannot record video. Try Chrome, Edge or Safari on a computer");
-  RECORDING=true; if(P.playing) $("play").click();
-  try{
-    const story=P.story, n=story.scenes.length, keep=P.idx;
-    const audio=await studioAll("playStatus");
-    const imgs=[];
-    for(let i=0;i<n;i++){
-      setStatus("playStatus","Drawing scene "+(i+1)+" of "+n+"…");
-      P.idx=i; drawScene(story.scenes[i],false);
-      const st=$("stage").cloneNode(true); st.setAttribute("width",960); st.setAttribute("height",540);
-      imgs.push(await svgToImg(st));
-    }
-    P.idx=keep; drawScene(story.scenes[keep],false);
-    const W=1280,H=720, cv=document.createElement("canvas"); cv.width=W; cv.height=H; const g=cv.getContext("2d");
-    const paint=(i,a)=>{ g.globalAlpha=1; g.fillStyle=THEME.bg; g.fillRect(0,0,W,H);
-      if(i>0&&a<1) g.drawImage(imgs[i-1],0,0,W,H); g.globalAlpha=a; g.drawImage(imgs[i],0,0,W,H); g.globalAlpha=1; };
-    paint(0,1);
-    const stream=cv.captureStream(30), ctx=ensureCtx(); let dest=null;
-    if(audio&&ctx){ dest=ctx.createMediaStreamDestination(); dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t)); }
-    const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:4e6}), parts=[];
-    rec.ondataavailable=e=>{ if(e.data&&e.data.size) parts.push(e.data); };
-    const stopped=new Promise(r=>rec.onstop=r);
-    rec.start(1000);
-    const wpm=150;
-    for(let i=0;i<n;i++){
-      let dur;
-      if(audio&&dest){ const c=audio[i], buf=ctx.createBuffer(1,c.audio.length,c.sr); buf.copyToChannel(c.audio,0);
-        const s=ctx.createBufferSource(); s.buffer=buf; s.connect(dest); s.start(ctx.currentTime+0.35); dur=buf.duration+0.9; }
-      else dur=Math.max(4,String(story.scenes[i].narration||"").split(/\s+/).length/wpm*60);
-      setStatus("playStatus","Recording scene "+(i+1)+" of "+n+". Keep this tab open.");
-      const t0=performance.now();
-      await new Promise(res=>{ const iv=setInterval(()=>{ const t=(performance.now()-t0)/1000; paint(i,Math.min(1,t/0.5)); if(t>=dur){ clearInterval(iv); res(); } },33); });
-    }
-    rec.stop(); await stopped;
-    const mp4=mime.startsWith("video/mp4");
-    download(new Blob(parts,{type:mime.split(";")[0]}),slug(story.title||"explainer")+"-video."+(mp4?"mp4":"webm"));
-    setStatus("playStatus",(mp4?"Saved as MP4":"Saved as WebM, because this browser cannot record MP4")+(audio?", with the studio voice.":". It has no narration: the browser voice cannot be recorded, so switch the voice to the studio voice for sound."),"ok");
-  } finally { RECORDING=false; }
-}));
+async function withRecording(fn){ if(RECORDING) return; RECORDING=true; if(P.playing) $("play").click(); const keep=P.idx;
+  try{ await fn(); } finally{ RECORDING=false; P.idx=Math.min(keep,P.story.scenes.length-1); drawScene(P.story.scenes[P.idx],false); } }
+function savedNote(r){ const m=$("music").checked; return (r.mp4?"Saved as MP4":"Saved as WebM, because this browser cannot record MP4")+(r.withAudio?" with the studio voice":"")+(m?(r.withAudio?" and":" with")+" background music.":".")+(r.withAudio?"":" The browser voice cannot be recorded, so switch the voice to the studio voice for narration."); }
+
+$("vMp4").addEventListener("click",ev=>busy(ev.currentTarget,"playStatus","Recording…",()=>withRecording(async()=>{
+  const story=P.story, n=story.scenes.length, idx=[...Array(n).keys()];
+  const clips=await studioAll("playStatus",idx), segs=[];
+  for(const i of idx){
+    setStatus("playStatus","Drawing scene "+(i+1)+" of "+n+"…");
+    const last=i===n-1, clip=clips&&clips[i], dur=clip?clipDur(clip,last):silentDur(story.scenes[i],last);
+    segs.push({clip,dur,frames:await sceneFrames(story,i,dur-0.35)});
+  }
+  const W=1280,H=720;
+  const r=await recordSegments({W,H,segs,statusId:"playStatus",name:slug(story.title||"explainer")+"-video",
+    paint:(g,si,t)=>{ const f=frameAt(segs,si,t); g.globalAlpha=1; g.fillStyle=THEME.bg; g.fillRect(0,0,W,H);
+      if(f.prev&&f.a<1) g.drawImage(f.prev,0,0,W,H); g.globalAlpha=f.a; g.drawImage(f.img,0,0,W,H); g.globalAlpha=1; }});
+  setStatus("playStatus",savedNote(r),"ok");
+})));
+
+/* ---- YouTube Shorts teaser: 1080 x 1920, the hook + the strongest finding + a closing card, 30 to 45 s ---- */
+async function shortsCard(kind,story){
+  const W=1080,H=1920, svg=sketchSvg(W,H,"Shorts frame"), b=Board(true); svg.append(b.g);
+  CUR={kicker:kickerOf(story),art:artFor(story,story===SAMPLE),i:0,n:1};
+  furniture(b,W,H,70);
+  if(kind==="frame"){
+    headline(b,story.title||"",80,300,74,920,{maxLines:3});
+    b.text("From the full video",W/2,1640,{size:38,anchor:"middle",color:MUTED});
+  } else {
+    b.art(CUR.art,W/2-170,330,340,{margin:60,font:30});
+    headline(b,"Watch the full breakdown",80,900,96,920,{maxLines:2});
+    b.text(story.title||"",W/2,1180,{size:46,maxW:900,maxLines:3,anchor:"middle",color:MUTED});
+    b.text("Full video on the channel",W/2,1560,{size:44,anchor:"middle",color:CORAL,role:"head"});
+    b.stroke("M"+(W/2)+" 1600V1700M"+(W/2-30)+" 1670L"+(W/2)+" 1700L"+(W/2+30)+" 1670",{color:CORAL,w:5,raw:true});
+  }
+  return await svgToImg(svg);
+}
+$("vShorts").addEventListener("click",ev=>busy(ev.currentTarget,"playStatus","Recording…",()=>withRecording(async()=>{
+  const story=P.story, sc=story.scenes;
+  const pick=["number","compare","bars"].map(l=>sc.findIndex((x,i)=>i>0&&x.layout===l)).find(i=>i>0);
+  const which=[0,pick!=null?pick:Math.min(2,sc.length-1)];
+  const clips=await studioAll("playStatus",which);
+  setStatus("playStatus","Drawing the teaser…");
+  const segs=[];
+  for(const i of which){ const clip=clips&&clips[which.indexOf(i)], dur=clip?clipDur(clip,false):silentDur(sc[i],false);
+    segs.push({clip,dur,frames:await sceneFrames(story,i,dur-0.35)}); }
+  const used=segs[0].dur+segs[1].dur;
+  if(used>41){ segs[1].dur=Math.max(8,41-segs[0].dur); segs[1].cut=true; }
+  const outro=Math.max(4,30-(segs[0].dur+segs[1].dur));
+  const frame=await shortsCard("frame",story), end=await shortsCard("end",story);
+  segs.push({clip:null,dur:outro,frames:[{t:0,img:end}]});
+  const W=1080,H=1920, y=760, h=W*540/960;
+  const r=await recordSegments({W,H,segs,statusId:"playStatus",name:slug(story.title||"explainer")+"-shorts",
+    paint:(g,si,t)=>{ g.globalAlpha=1;
+      if(si===2){ g.drawImage(frame,0,0,W,H); g.globalAlpha=easeOut(t/0.5); g.drawImage(end,0,0,W,H); g.globalAlpha=1; return; }
+      const f=frameAt(segs,si,t); g.drawImage(frame,0,0,W,H);
+      if(f.prev&&f.a<1) g.drawImage(f.prev,0,y,W,h); g.globalAlpha=f.a; g.drawImage(f.img,0,y,W,h); g.globalAlpha=1;
+      const tot=segs.reduce((a,x)=>a+x.dur,0), done=segs.slice(0,si).reduce((a,x)=>a+x.dur,0)+t;
+      g.fillStyle=CORAL; g.fillRect(0,H-14,W*Math.min(1,done/tot),14); }});
+  setStatus("playStatus","Teaser: "+Math.round(segs.reduce((a,x)=>a+x.dur,0))+" seconds, 1080 by 1920. "+savedNote(r),"ok");
+})));
 
 /* =========================== Examples =========================== */
 const SAMPLE_INFO={format:"infographic",title:"What can one paper become in MyPhD Studio?",citation:"Example infographic made with MyPhD Studio",
