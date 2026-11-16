@@ -212,50 +212,9 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
         <div id="topicSrc" class="stack" hidden>
           <div class="field"><label for="topic">Psychology topic</label>
             <input type="text" id="topic" placeholder="e.g. Cognitive dissonance"></div>
-          <div class="chips" aria-label="Example topics"><span>Try:</span>
-            <button type="button" data-topic="Attachment theory">Attachment theory</button>
-            <button type="button" data-topic="Cognitive dissonance">Cognitive dissonance</button>
-            <button type="button" data-topic="Loneliness">Loneliness</button>
-            <button type="button" data-topic="Parasocial relationships">Parasocial relationships</button>
-            <button type="button" data-topic="Anthropomorphism">Anthropomorphism</button>
-            <button type="button" data-topic="Learned helplessness">Learned helplessness</button>
-          </div>
           <div class="field"><label for="topicNotes">Your notes <span class="hint">(optional)</span></label>
             <textarea id="topicNotes" placeholder="Paste lecture notes, a textbook summary or key points. Claude will follow them."></textarea></div>
-          <div class="row">
-            <div class="field"><label for="field">Field of psychology</label>
-              <select id="field">
-                <option value="">Let Claude decide</option>
-                <option>Biological psychology and neuroscience</option>
-                <option>Clinical psychology</option>
-                <option>Cognitive psychology</option>
-                <option>Counselling psychology</option>
-                <option>Cross-cultural psychology</option>
-                <option>Cyberpsychology and human-AI interaction</option>
-                <option>Developmental psychology</option>
-                <option>Educational psychology</option>
-                <option>Evolutionary psychology</option>
-                <option>Forensic psychology</option>
-                <option>Health psychology</option>
-                <option>Industrial-organisational psychology</option>
-                <option>Personality psychology</option>
-                <option>Positive psychology</option>
-                <option>Social psychology</option>
-                <option>Sport psychology</option>
-              </select></div>
-            <div class="field"><label for="persp">Explain it through</label>
-              <select id="persp">
-                <option value="">Compare the main schools of thought</option>
-                <option>Biological</option>
-                <option>Behavioural</option>
-                <option>Cognitive</option>
-                <option>Psychodynamic</option>
-                <option>Humanistic</option>
-                <option>Evolutionary</option>
-                <option>Sociocultural</option>
-                <option>Positive psychology</option>
-              </select></div>
-          </div>
+          <input type="hidden" id="field" value=""><input type="hidden" id="persp" value="">
         </div>
         <div id="paperSrc" class="stack">
         <div class="drop" id="drop">
@@ -277,41 +236,15 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
               <option value="students" selected>Students</option>
               <option value="researchers">Researchers</option>
             </select></div>
-          <div class="field"><label for="lang">Language</label>
-            <select id="lang">
-              <option value="en">English</option>
-              <option value="ms">Bahasa Melayu</option>
-            </select></div>
         </div>
+    <input type="hidden" id="lang" value="en"><input type="hidden" id="talk" value="10"><input type="hidden" id="carN" value="10"><input type="checkbox" id="isAuthor" hidden><span id="authorField" hidden></span>
     <details class="more">
-      <summary>Slides and carousel options</summary>
-      <div class="stack">
-            <fieldset class="opt"><legend>Conference slides</legend>
-              <div class="row">
-                  <div class="field" id="talkField"><label for="talk">Talk length</label>
-                    <select id="talk">
-                      <option value="5">5 minutes</option>
-                      <option value="10" selected>10 minutes</option>
-                      <option value="15">15 minutes</option>
-                      <option value="20">20 minutes</option>
-                    </select></div>
-                <div class="field"><label for="presenter">Presenter name <span class="hint">(optional)</span></label>
-                  <input type="text" id="presenter" placeholder="Shown on the title slide"></div>
-              </div>
-              <label class="check-inline" id="authorField"><input type="checkbox" id="isAuthor"> I am one of the authors, so the speaker notes say "we"</label>
-            </fieldset>
-            <fieldset class="opt"><legend>Instagram carousel</legend>
-              <div class="row">
-                  <div class="field" id="carNField"><label for="carN">Number of slides</label>
-                    <select id="carN">
-                      <option value="6">6 slides</option>
-                      <option value="8" selected>8 slides</option>
-                      <option value="10">10 slides</option>
-                    </select></div>
-                <div class="field"><label for="handle">Your Instagram handle <span class="hint">(optional)</span></label>
-                  <input type="text" id="handle" placeholder="@yourhandle"></div>
-              </div>
-            </fieldset>
+      <summary>Your name and Instagram handle <span class="hint">(optional)</span></summary>
+      <div class="row">
+        <div class="field"><label for="presenter">Presenter name</label>
+          <input type="text" id="presenter" placeholder="Shown on the title slide"></div>
+        <div class="field"><label for="handle">Instagram handle</label>
+          <input type="text" id="handle" placeholder="@yourhandle"></div>
       </div>
     </details>
         <div class="field"><span class="flabel" id="styleLabel">Style</span>
@@ -1796,7 +1729,7 @@ function refreshPrompt(){
   const w=replyWords();
   const nk=NUMW[KINDS().length];
   $("scopeHint").textContent=w>3600
-    ?"Claude's reply will be long, about "+w.toLocaleString()+" words, so it may stop partway. If it does, type \"continue\" in the chat and paste both parts here together. A shorter "+(VIDEO_ON?"video or talk":"talk")+" keeps it in one go."
+    ?"Claude's reply will be long, about "+w.toLocaleString()+" words, so it may stop partway. If it does, type \"continue\" in the chat and paste both parts here together. A shorter video keeps it in one go."
     :"One prompt, one reply: Claude writes all "+nk+" formats together, about "+w.toLocaleString()+" words.";
   return p;
 }
