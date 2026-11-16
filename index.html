@@ -322,6 +322,9 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
           <button class="quiet" id="full" type="button">Full screen</button>
           <span class="count" id="count"></span>
         </div>
+        <div class="controls">
+          <button class="primary" id="vMp4" type="button">Download MP4</button>
+        </div>
         <p class="status" id="playStatus" role="status"></p>
       </section>
 
@@ -397,6 +400,7 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
         <div class="controls">
           <button class="quiet" id="sPptx" type="button">Download PowerPoint</button>
           <button class="quiet" id="sPdf" type="button">Download PDF</button>
+          <button class="quiet" id="sPng" type="button">Download PNGs (ZIP)</button>
         </div>
         <p class="status" id="slidesStatus" role="status"></p>
       </section>
@@ -422,6 +426,7 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
         <div class="controls">
           <button class="primary" id="cZip" type="button">Download all slides (ZIP)</button>
           <button class="quiet" id="cOne" type="button">Download this slide</button>
+          <button class="quiet" id="cPdf" type="button">Download PDF</button>
         </div>
         <p class="status" id="carStatus" role="status"></p>
       </section>
@@ -1863,6 +1868,17 @@ function embeddedFont(){                      /* the style's fonts, inlined so e
   })();
   return fontCss[key];
 }
+async function svgToImg(svg){                 /* an SVG drawing as a loaded image, with the style's fonts inlined */
+  const c=svg.cloneNode(true);
+  c.setAttribute("xmlns",NS);
+  const st=S("style"); st.textContent=(await embeddedFont())+".ink{fill:none;stroke-linecap:round;stroke-linejoin:round}text{font-family:"+fontStack()+"}";
+  c.insertBefore(st,c.firstChild);
+  c.insertBefore($("sharedDefs").querySelector("defs").cloneNode(true),c.firstChild);
+  const img=new Image();
+  await new Promise((res,rej)=>{ img.onload=res; img.onerror=()=>rej(new Error("the drawing could not be turned into an image")); img.src="data:image/svg+xml;charset=utf-8,"+encodeURIComponent(new XMLSerializer().serializeToString(c)); });
+  await new Promise(r=>setTimeout(r,60));
+  return img;
+}
 async function svgToPng(svg,scale,jpeg){
   const w=+svg.getAttribute("width"), h=+svg.getAttribute("height");
   const c=svg.cloneNode(true);
@@ -2464,6 +2480,89 @@ $("cZip").addEventListener("click",ev=>busy(ev.currentTarget,"carStatus","Prepar
   zip.file("caption.txt",$("cCaption").value);
   download(await zip.generateAsync({type:"blob"}),base+"-carousel.zip");
   setStatus("carStatus","Saved "+d.slides.length+" slides at 1080 by 1350 pixels, in order, plus the caption.","ok");
+}));
+
+$("cPdf").addEventListener("click",ev=>busy(ev.currentTarget,"carStatus","Preparing…",async()=>{
+  await loadLib("pdf");
+  const d=DATA.carousel, pdf=new window.jspdf.jsPDF({orientation:"portrait",unit:"pt",format:[540,675]});
+  for(let i=0;i<d.slides.length;i++){
+    setStatus("carStatus","Drawing slide "+(i+1)+" of "+d.slides.length+"…");
+    if(i) pdf.addPage([540,675],"portrait");
+    pdf.addImage(await blobToDataURL(await svgToPng(drawCar(d,i),1,true)),"JPEG",0,0,540,675);
+  }
+  download(pdf.output("blob"),slug(d.title)+"-carousel.pdf");
+  setStatus("carStatus","Saved as a PDF with one slide per page.","ok");
+}));
+$("sPng").addEventListener("click",ev=>busy(ev.currentTarget,"slidesStatus","Preparing…",async()=>{
+  await loadLib("zip");
+  const d=DATA.slides, zip=new window.JSZip(), base=slug(d.title);
+  for(let i=0;i<d.slides.length;i++){
+    setStatus("slidesStatus","Drawing slide "+(i+1)+" of "+d.slides.length+"…");
+    zip.file(base+"-slide-"+String(i+1).padStart(2,"0")+".png",await svgToPng(drawSlide(d,i),2));
+  }
+  download(await zip.generateAsync({type:"blob"}),base+"-slides.zip");
+  setStatus("slidesStatus","Saved "+d.slides.length+" slides as PNG images at 1920 by 1080 pixels.","ok");
+}));
+
+/* ---- Video as MP4: each scene drawn onto a canvas with its narration, recorded in real time ---- */
+function recMime(){
+  const R=window.MediaRecorder; if(!R) return "";
+  return ["video/mp4;codecs=avc1.42E01E,mp4a.40.2","video/mp4;codecs=avc1,mp4a","video/mp4","video/webm;codecs=vp9,opus","video/webm"].find(m=>R.isTypeSupported(m))||"";
+}
+async function studioAll(statusId){              /* the studio voice for every scene, or null if it cannot run here */
+  if($("mode").value!=="studio") return null;
+  studioStart();
+  const t0=Date.now();
+  while(ST.status!=="ready"){ if(ST.status==="failed"||Date.now()-t0>600000) return null; setStatus(statusId,"Loading the studio voice for the narration…"); await new Promise(r=>setTimeout(r,500)); }
+  const n=P.story.scenes.length, keys=[...Array(n).keys()].map(studioKey);
+  while(keys.some(k=>!ST.cache.has(k))){
+    if(ST.status==="failed") return null;
+    setStatus(statusId,"Preparing the narration: scene "+(keys.filter(k=>ST.cache.has(k)).length+1)+" of "+n+"…");
+    pumpStudio(); await new Promise(r=>setTimeout(r,300));
+  }
+  return keys.map(k=>ST.cache.get(k));
+}
+let RECORDING=false;
+$("vMp4").addEventListener("click",ev=>busy(ev.currentTarget,"playStatus","Recording…",async()=>{
+  if(RECORDING) return; const mime=recMime();
+  if(!mime) throw new Error("this browser cannot record video. Try Chrome, Edge or Safari on a computer");
+  RECORDING=true; if(P.playing) $("play").click();
+  try{
+    const story=P.story, n=story.scenes.length, keep=P.idx;
+    const audio=await studioAll("playStatus");
+    const imgs=[];
+    for(let i=0;i<n;i++){
+      setStatus("playStatus","Drawing scene "+(i+1)+" of "+n+"…");
+      P.idx=i; drawScene(story.scenes[i],false);
+      const st=$("stage").cloneNode(true); st.setAttribute("width",960); st.setAttribute("height",540);
+      imgs.push(await svgToImg(st));
+    }
+    P.idx=keep; drawScene(story.scenes[keep],false);
+    const W=1280,H=720, cv=document.createElement("canvas"); cv.width=W; cv.height=H; const g=cv.getContext("2d");
+    const paint=(i,a)=>{ g.globalAlpha=1; g.fillStyle=THEME.bg; g.fillRect(0,0,W,H);
+      if(i>0&&a<1) g.drawImage(imgs[i-1],0,0,W,H); g.globalAlpha=a; g.drawImage(imgs[i],0,0,W,H); g.globalAlpha=1; };
+    paint(0,1);
+    const stream=cv.captureStream(30), ctx=ensureCtx(); let dest=null;
+    if(audio&&ctx){ dest=ctx.createMediaStreamDestination(); dest.stream.getAudioTracks().forEach(t=>stream.addTrack(t)); }
+    const rec=new MediaRecorder(stream,{mimeType:mime,videoBitsPerSecond:4e6}), parts=[];
+    rec.ondataavailable=e=>{ if(e.data&&e.data.size) parts.push(e.data); };
+    const stopped=new Promise(r=>rec.onstop=r);
+    rec.start(1000);
+    const wpm=150;
+    for(let i=0;i<n;i++){
+      let dur;
+      if(audio&&dest){ const c=audio[i], buf=ctx.createBuffer(1,c.audio.length,c.sr); buf.copyToChannel(c.audio,0);
+        const s=ctx.createBufferSource(); s.buffer=buf; s.connect(dest); s.start(ctx.currentTime+0.35); dur=buf.duration+0.9; }
+      else dur=Math.max(4,String(story.scenes[i].narration||"").split(/\s+/).length/wpm*60);
+      setStatus("playStatus","Recording scene "+(i+1)+" of "+n+". Keep this tab open.");
+      const t0=performance.now();
+      await new Promise(res=>{ const iv=setInterval(()=>{ const t=(performance.now()-t0)/1000; paint(i,Math.min(1,t/0.5)); if(t>=dur){ clearInterval(iv); res(); } },33); });
+    }
+    rec.stop(); await stopped;
+    const mp4=mime.startsWith("video/mp4");
+    download(new Blob(parts,{type:mime.split(";")[0]}),slug(story.title||"explainer")+"-video."+(mp4?"mp4":"webm"));
+    setStatus("playStatus",(mp4?"Saved as MP4":"Saved as WebM, because this browser cannot record MP4")+(audio?", with the studio voice.":". It has no narration: the browser voice cannot be recorded, so switch the voice to the studio voice for sound."),"ok");
+  } finally { RECORDING=false; }
 }));
 
 /* =========================== Examples =========================== */
