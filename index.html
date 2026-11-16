@@ -104,6 +104,7 @@ progress{width:100%;height:8px;accent-color:var(--amber)}
 .picker button.done .tick::after{content:"";width:8px;height:12px;border:solid var(--ink);border-width:0 2.5px 2.5px 0;transform:translateY(-1px) rotate(45deg)}
 svg.sketch{display:block;width:100%;height:auto;font-family:var(--sketch)}
 .flabel{font-weight:600;font-size:14px}
+.stylecard{gap:10px;padding:14px}
 .stylebar{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
 .stylebar button{display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:8px;border:1px solid var(--line);border-radius:12px;background:#fff;font-weight:600;font-size:13px;line-height:1.25;text-align:left}
 .stylebar button svg{width:100%;height:auto;display:block;border-radius:6px;border:1px solid var(--line)}
@@ -247,9 +248,6 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
           <input type="text" id="handle" placeholder="@yourhandle"></div>
       </div>
     </details>
-        <div class="field"><span class="flabel" id="styleLabel">Style</span>
-          <div class="stylebar" role="radiogroup" aria-labelledby="styleLabel" id="styleBar"></div>
-          <p class="hint">The style shapes the illustration Claude draws, so pick it before you copy the prompt. You can still switch afterwards.</p></div>
         <label class="vidtoggle" for="wantVideo"><input type="checkbox" id="wantVideo">
           <div><b>Also make an explainer video</b><span>A narrated, illustrated video. It makes Claude's reply longer.</span></div></label>
         <fieldset class="opt" id="videoOpts" hidden><legend>Explainer video</legend>
@@ -294,6 +292,8 @@ ul.cautions{margin:0;padding-left:20px;font-size:14px;display:flex;flex-directio
 
   <section class="stack" id="results" hidden aria-labelledby="resTitle">
     <h2 class="restitle" id="resTitle"></h2>
+    <div class="card stylecard"><span class="flabel" id="styleLabel">Style</span>
+      <div class="stylebar" role="radiogroup" aria-labelledby="styleLabel" id="styleBar"></div></div>
     <div class="picker three" role="radiogroup" aria-label="Output">
       <button type="button" role="radio" data-out="info" aria-checked="true"><i class="tick" aria-hidden="true"></i><b>Infographic</b></button>
       <button type="button" role="radio" data-out="slides" aria-checked="false"><i class="tick" aria-hidden="true"></i><b>Slides</b></button>
@@ -805,7 +805,19 @@ const SAMPLE_ART_SRC={
     callouts:[{x:100,y:24,label:"fig. a — apex"},{x:72,y:100,label:"fig. b — lamina"},{x:96,y:192,label:"fig. c — petiole"}]}
 };
 const SAMPLE_ART={}; Object.entries(SAMPLE_ART_SRC).forEach(([k,v])=>{ SAMPLE_ART[k]=normArt(v); });
-function artFor(d,isSample){ return isSample?SAMPLE_ART[THEME_KEY]:(d&&d.art)||null; }
+const ART_KEYS={architectural:"refined-architectural",editorial:"editorial-magazine",journal:"vintage-field-journal"};
+function normArts(a){                         /* {architectural, editorial, journal}, or one drawing from an older reply */
+  if(!a||typeof a!=="object") return null;
+  if(typeof a.svg==="string"){ const one=normArt(a); return one?{any:one}:null; }
+  const out={}; Object.entries(ART_KEYS).forEach(([k,t])=>{ const v=normArt(a[k]); if(v) out[t]=v; });
+  return Object.keys(out).length?out:null;
+}
+function artFor(d,isSample){
+  if(isSample) return SAMPLE_ART[THEME_KEY];
+  const a=d&&d.art; if(!a) return null;
+  if(a.els) return a;                         /* saved before this change */
+  return a[THEME_KEY]||a.any||null;
+}
 function arrow(b,x1,y,x2){ b.stroke("M"+x1+" "+y+"H"+x2+"M"+(x2-14)+" "+(y-11)+"L"+x2+" "+y+"L"+(x2-14)+" "+(y+11),{color:CORAL,w:4.5,dur:.4,step:.35}); }
 
 /* ---------- Charts shared by every format ---------- */
@@ -1675,7 +1687,7 @@ ${accuracy}
 
 ${aud}
 
-The page will draw everything in the "${THEME.label}" style, ${THEME.brief}. Keep the wording calm and scholarly to match, and choose icons that read well as clean, single-weight line art.
+Keep the wording calm and scholarly, and choose icons that read well as clean, single-weight line art.
 
 ${artRules()}
 
@@ -1694,6 +1706,10 @@ ${JSON.stringify(sch)}`;
   return out;
 }
 function artSchema(){
+  const one=artOne(); return {type:"object",additionalProperties:false,required:["architectural","editorial","journal"],
+    properties:{architectural:one,editorial:one,journal:one}};
+}
+function artOne(){
   return {type:"object",additionalProperties:false,required:["svg","callouts"],properties:{
     svg:{type:"string",description:"SVG child elements only (no <svg> wrapper), drawn in a 200 by 200 box. Allowed: <path>, <circle>, <ellipse>, <line>, <polyline>, <polygon>, <rect>, with geometry attributes and an optional class. Under 4,000 characters."},
     callouts:{type:"array",maxItems:3,items:{type:"object",additionalProperties:false,required:["x","y","label"],properties:{
@@ -1712,14 +1728,22 @@ const ART_RULES={
 - Give exactly 2 or 3 callouts. Each x and y is a point on the drawing, and each label is a short annotation in the style "fig. a — amygdala". Spread the points so labels fall on both sides. Use 12 to 40 elements.`
 };
 function artRules(){
-  return `## The illustration ("art")
-Draw one illustration that captures the central idea as a visual metaphor. The page places it on the infographic, the title slide, the first carousel slide${VIDEO_ON?" and the video's title scene":""}, and inks it in the chosen style.
-- Write plain SVG shapes in a 200 by 200 box: <path>, <circle>, <ellipse>, <line>, <polyline>, <polygon> or <rect>, with geometry attributes (d, cx, cy, r, rx, ry, x1, y1, x2, y2, points, x, y, width, height) and an optional class. No fill, stroke, style, transform, text or other attributes; the page sets every colour and line weight.
-${ART_RULES[THEME_KEY]}`;
+  return `## The illustrations ("art")
+The reader switches between three visual styles after you reply, so draw the same central idea three times, once per style, as a visual metaphor. The page places the drawing on the infographic, the title slide, the first carousel slide${VIDEO_ON?" and the video's title scene":""}, and inks it in the style's colours.
+- Each drawing is plain SVG shapes in a 200 by 200 box: <path>, <circle>, <ellipse>, <line>, <polyline>, <polygon> or <rect>, with geometry attributes (d, cx, cy, r, rx, ry, x1, y1, x2, y2, points, x, y, width, height) and an optional class. No fill, stroke, style, transform, text or other attributes; the page sets every colour and line weight.
+
+"architectural" (Refined Architectural: ${THEMES["refined-architectural"].brief}):
+${ART_RULES["refined-architectural"]}
+
+"editorial" (Editorial Magazine: ${THEMES["editorial-magazine"].brief}):
+${ART_RULES["editorial-magazine"]}
+
+"journal" (Vintage Field Journal: ${THEMES["vintage-field-journal"].brief}):
+${ART_RULES["vintage-field-journal"]}`;
 }
 function replyWords(){
   const L=LENGTHS[$("length").value];
-  return (VIDEO_ON?L.total:0)+(+$("talk").value)*130+700+(+$("carN").value)*35+150;
+  return (VIDEO_ON?L.total:0)+(+$("talk").value)*130+700+(+$("carN").value)*35+400;
 }
 function refreshPrompt(){
   const has=hasSource();
@@ -2560,7 +2584,7 @@ function makeAll(raw){
     const part=raw[ALL_KEYS[k]];
     if(!part||typeof part!=="object"){ failed.push(OUTS[k].name); return; }
     try{
-      const d=NORM[k](Object.assign({},part,{mode:raw.mode,category:raw.category})); d.art=normArt(raw.art);
+      const d=NORM[k](Object.assign({},part,{mode:raw.mode,category:raw.category})); d.art=normArts(raw.art);
       SHOW[k](d,false); save(k,d);
       made.push(k==="video"?"video ("+d.scenes.length+" scenes)":k==="info"?"infographic":k==="slides"?"slides ("+d.slides.length+")":"carousel ("+d.slides.length+" slides)");
     }catch(e){ failed.push(OUTS[k].name); }
@@ -2577,7 +2601,7 @@ $("make").addEventListener("click",()=>{
   try{
     const raw0=extractJSON($("reply").value);
     if(["video","infographic","slides","carousel"].filter(x=>raw0[x]&&typeof raw0[x]==="object"&&!Array.isArray(raw0[x])).length>=2){ makeAll(raw0); return; }
-    const raw=raw0, k=kindOf(raw), d=NORM[k](raw); d.art=normArt(raw.art);
+    const raw=raw0, k=kindOf(raw), d=NORM[k](raw); d.art=normArts(raw.art);
     if(k==="video"&&!VIDEO_ON) setVideo(true);
     if(k!==OUT) setOut(k);
     SHOW[k](d,false); save(k,d); showCautions(d.cautions); showCat(d); reveal();
